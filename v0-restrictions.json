@@ -1,0 +1,221 @@
+{
+  "projectName": "Radar Cultural",
+  "description": "Guía de restricciones para Google AI Studio (v0) - protege el backend y la base de datos",
+  "version": "1.0",
+  "lastUpdated": "2026-09-06",
+  
+  "⚠️ REGLA DE ORO": {
+    "rule": "v0 SOLO edita UI/UX - NUNCA toca datos, backend, ni configuración",
+    "consequence": "Si lo haces, rompes el proyecto"
+  },
+
+  "✅ ARCHIVOS QUE v0 PUEDE EDITAR": {
+    "description": "Estos archivos son SEGUROS para que v0 los modifique",
+    "files": [
+      "src/components/EventosPopup.tsx - Diseño del popup de eventos",
+      "src/components/Sidebar.tsx - Filtros y navegación lateral",
+      "src/components/FilterPanel.tsx - Panel de filtrado de eventos",
+      "src/App.tsx - SOLO la parte UI/layout, nunca data fetching",
+      "src/App.css - Todos los estilos CSS",
+      "src/index.css - Estilos globales",
+      "src/styles/* - Cualquier archivo de estilos"
+    ],
+    "what_can_do": [
+      "Cambiar colores, fonts, tamaños",
+      "Reordenar elementos visuales",
+      "Agregar animaciones, transiciones",
+      "Mejorar responsive (mobile, tablet, desktop)",
+      "Cambiar layout y diseño",
+      "Agregar componentes visuales nuevos",
+      "Mejorar accesibilidad (contraste, size)",
+      "Crear cards, buttons, inputs bonitos",
+      "Agregar temas (light/dark mode)"
+    ]
+  },
+
+  "❌ ARCHIVOS PROHIBIDOS - v0 NUNCA TOCA": {
+    "description": "Si v0 edita cualquiera de estos, rompe todo",
+    "critical_files": [
+      {
+        "file": "src/components/espacios.ts",
+        "reason": "Base de datos de venues - solo Claude",
+        "if_touched": "Se pierden todos los pines del mapa"
+      },
+      {
+        "file": ".env",
+        "reason": "Credenciales y variables de entorno",
+        "if_touched": "La app no puede conectarse a Supabase"
+      },
+      {
+        "file": ".env.local",
+        "reason": "Configuración local de desarrollo",
+        "if_touched": "Breaks local development"
+      },
+      {
+        "file": "vercel.json",
+        "reason": "Configuración de Vercel deploy",
+        "if_touched": "El deploy falla"
+      },
+      {
+        "file": "tsconfig.json",
+        "reason": "Configuración de TypeScript",
+        "if_touched": "Errores de compilación"
+      },
+      {
+        "file": "package.json",
+        "reason": "Dependencias del proyecto",
+        "if_touched": "Conflictos de versiones, build failures"
+      },
+      {
+        "file": ".gitignore",
+        "reason": "Configuración de Git",
+        "if_touched": "Se pushean archivos que no deberían"
+      },
+      {
+        "file": "vite.config.ts",
+        "reason": "Configuración de build",
+        "if_touched": "La app no compila"
+      }
+    ]
+  },
+
+  "❌ CÓDIGO QUE v0 NUNCA ESCRIBE": {
+    "description": "Aunque veas estas cosas en el código, v0 NO debe modificarlas",
+    "forbidden_code_patterns": [
+      {
+        "pattern": "Supabase conexiones",
+        "example": "createClient(), supabase.from()",
+        "reason": "Maneja la conexión con la BD"
+      },
+      {
+        "pattern": "API queries/mutations",
+        "example": "fetch(), axios calls, GraphQL mutations",
+        "reason": "Modifica datos en la BD"
+      },
+      {
+        "pattern": "Data fetching hooks",
+        "example": "useEffect(() => fetch eventos), custom hooks",
+        "reason": "Controla qué datos trae la app"
+      },
+      {
+        "pattern": "Context/Estado global de datos",
+        "example": "createContext(), useContext()",
+        "reason": "Maneja la fuente de datos"
+      },
+      {
+        "pattern": "Rutas de importes críticas",
+        "example": "import espacios from './espacios.ts'",
+        "reason": "Rompe referencias a la BD"
+      },
+      {
+        "pattern": "Validaciones de datos",
+        "example": "Data sanitization, format checking",
+        "reason": "Afecta integridad de datos"
+      }
+    ]
+  },
+
+  "🔒 RESTRICCIONES POR CARPETA": {
+    "/src": {
+      "status": "⚠️ PARCIALMENTE SEGURO",
+      "safe_subdirs": [
+        "src/components/EventosPopup.tsx",
+        "src/components/Sidebar.tsx",
+        "src/components/FilterPanel.tsx",
+        "src/*.css"
+      ],
+      "unsafe_subdirs": [
+        "src/components/espacios.ts - NUNCA TOCAR",
+        "src/lib/ - Funciones de utilidad",
+        "src/hooks/ - Custom hooks (data fetching)",
+        "src/services/ - Conexiones a APIs/DB"
+      ]
+    },
+    "/public": {
+      "status": "✅ SEGURO",
+      "can_do": "Cambiar archivos de assets (imágenes, fonts)"
+    },
+    "root": {
+      "status": "❌ PROHIBIDO",
+      "cannot_touch": [
+        ".env",
+        "vercel.json",
+        "tsconfig.json",
+        "package.json",
+        ".gitignore",
+        "vite.config.ts"
+      ]
+    }
+  },
+
+  "⚡ FLUJO CORRECTO PARA v0": {
+    "step1": "Entra a v0 (Google AI Studio)",
+    "step2": "Selecciona UNA tarea de UI (mejorar popup, hacer responsive, etc.)",
+    "step3": "Edita SOLO archivos de src/components/*.tsx y src/*.css",
+    "step4": "Previsualiza en v0",
+    "step5": "Cuando está bueno, v0 pushea a GitHub main",
+    "step6": "Vercel redeploy automático (30-60 seg)",
+    "step7": "Cambios aparecen en radarcultural.vercel.app ✅",
+    "step8": "NUNCA tocar Supabase, variables de entorno, ni config files"
+  },
+
+  "📞 SI v0 QUIERE HACER ALGO NO PERMITIDO": {
+    "situation": "v0 ve que necesita modificar algo fuera de su scope",
+    "what_to_do": [
+      "1. NO lo hace directamente",
+      "2. Le pregunta a Claude: 'Necesito acceso a X'",
+      "3. Claude lo agrega al backend si es seguro",
+      "4. v0 usa el nuevo componente/función",
+      "5. Profit ✅"
+    ],
+    "examples": [
+      "v0: 'Quiero agregar precio en el popup'",
+      "Claude: 'Voy a agregar campo precio a Supabase'",
+      "v0: 'Ahora muestro precio en EventosPopup.tsx'",
+      "Result: Cambio seguro en ambos lados"
+    ]
+  },
+
+  "🚨 CHECKLIST ANTES DE QUE v0 PUSHEE": {
+    "verify": [
+      "☑️ ¿Edité SOLO archivos de componentes o CSS?",
+      "☑️ ¿NO toqué espacios.ts?",
+      "☑️ ¿NO toqué .env, vercel.json, tsconfig.json?",
+      "☑️ ¿NO agregué código de Supabase?",
+      "☑️ ¿NO cambié lógica de data fetching?",
+      "☑️ ¿Preview funciona en v0?",
+      "☑️ ¿Es solo cambios visuales?"
+    ],
+    "if_any_no": "NO pushees, preguntale a Claude primero"
+  },
+
+  "📋 EJEMPLOS DE TAREAS SEGURAS vs PROHIBIDAS": {
+    "SEGURO ✅": [
+      "Cambiar el color del popup de eventos",
+      "Hacer el sidebar collapsible en mobile",
+      "Agregar animaciones a los pines",
+      "Mejorar estilos de buttons",
+      "Crear tema dark mode",
+      "Mejorar responsive del mapa",
+      "Rediseñar el FilterPanel"
+    ],
+    "PROHIBIDO ❌": [
+      "Agregar nuevos campos de eventos (eso es DB)",
+      "Modificar espacios.ts (lista de venues)",
+      "Cambiar cómo se traen datos de Supabase",
+      "Crear nuevas APIs",
+      "Modificar .env o vercel.json",
+      "Cambiar tsconfig.json",
+      "Scrapeador de datos"
+    ]
+  },
+
+  "🎯 SUMMARY": {
+    "v0_is": "Frontend developer - UI/UX specialist",
+    "v0_manages": "Componentes React, estilos CSS, animaciones, responsive",
+    "v0_never_touches": "Supabase, backend, configuración, datos",
+    "v0_gets_data_from": "El código React existente que Claude mantiene",
+    "v0_is_safe_to": "Cambiar cómo se ven las cosas, nunca qué datos hay",
+    "if_doubt": "Preguntale a Claude, no hagas nada"
+  }
+}
