@@ -1,0 +1,6 @@
+{
+  "name": "Radar Cultural",
+  "description": "Mapa cultural interactivo de Buenos Aires con museos, cafés notables, librerías, patrimonio y agenda de eventos.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

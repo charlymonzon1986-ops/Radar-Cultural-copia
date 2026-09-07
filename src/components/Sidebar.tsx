@@ -1,7 +1,10 @@
-import { useState } from "react";
-import { CATEGORIAS, CategoryKey } from "@/data/espacios";
+import React from "react";
+import { CategoryKey, CATEGORIAS } from "@/data/espacios";
+import FilterPanel from "./FilterPanel";
 
-interface MapLegendProps {
+interface SidebarProps {
+  isOpen: boolean;
+  onToggle: () => void;
   activeFilter: CategoryKey | "TODOS";
   onFilterChange: (filter: CategoryKey | "TODOS") => void;
   isAdmin?: boolean;
@@ -10,17 +13,18 @@ interface MapLegendProps {
   onLogoutAdmin?: () => void;
 }
 
-const MapLegend = ({
+export const Sidebar: React.FC<SidebarProps> = ({
+  isOpen,
+  onToggle,
   activeFilter,
   onFilterChange,
   isAdmin = false,
   onOpenAdmin,
   onSecretTrigger,
   onLogoutAdmin,
-}: MapLegendProps) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [clicks, setClicks] = useState(0);
-  const [lastClickTime, setLastClickTime] = useState(0);
+}) => {
+  const [clicks, setClicks] = React.useState(0);
+  const [lastClickTime, setLastClickTime] = React.useState(0);
 
   const handleTitleClick = () => {
     const now = Date.now();
@@ -38,7 +42,7 @@ const MapLegend = ({
     setLastClickTime(now);
   };
 
-  if (isCollapsed) {
+  if (!isOpen) {
     return (
       <div
         className="absolute top-3 left-3 z-[1000]"
@@ -47,7 +51,7 @@ const MapLegend = ({
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          onClick={() => setIsCollapsed(false)}
+          onClick={onToggle}
           className="flex items-center gap-2 h-9 px-3 rounded-xl bg-card/95 backdrop-blur-md border border-border shadow-md text-foreground font-bold text-xs hover:bg-muted active:scale-95 transition-all"
           title="Abrir menú de filtros"
         >
@@ -62,17 +66,18 @@ const MapLegend = ({
   }
 
   return (
-    <div
+    <aside
       className="absolute top-3 left-3 z-[1000] w-[250px] sm:w-[260px] bg-card/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl shadow-xl border border-border animate-in fade-in zoom-in-95 duration-150 max-h-[82vh] overflow-y-auto"
       onMouseDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
+      {/* Header */}
       <div className="flex items-center justify-between border-b border-border pb-2 mb-2">
         <div
           onClick={handleTitleClick}
           className="flex items-center gap-1.5 cursor-default select-none active:opacity-80"
-          title="Radar Cultural"
+          title="Radar Cultural (Buenos Aires)"
         >
           <i className="fas fa-compass text-primary text-xs" />
           <h4 className="font-display text-xs font-bold text-foreground tracking-wide">
@@ -80,7 +85,7 @@ const MapLegend = ({
           </h4>
         </div>
         <button
-          onClick={() => setIsCollapsed(true)}
+          onClick={onToggle}
           title="Contraer menú"
           className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted px-2 py-1 rounded-lg transition-colors h-7"
         >
@@ -89,49 +94,12 @@ const MapLegend = ({
         </button>
       </div>
 
-      <div className="space-y-0.5">
-        <button
-          onClick={() => onFilterChange("TODOS")}
-          className={`flex items-center w-full gap-2.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-all ${
-            activeFilter === "TODOS"
-              ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-              : "text-foreground hover:bg-muted/80"
-          }`}
-        >
-          <i
-            className={`fas fa-layer-group text-xs ${
-              activeFilter === "TODOS" ? "text-primary-foreground" : "text-muted-foreground"
-            }`}
-          />
-          <span className="flex-1 text-left truncate">Todos</span>
-        </button>
-
-        {(Object.entries(CATEGORIAS) as [CategoryKey, typeof CATEGORIAS[CategoryKey]][]).map(
-          ([key, cat]) => {
-            const isActive = activeFilter === key;
-            return (
-              <button
-                key={key}
-                onClick={() => onFilterChange(key)}
-                className={`flex items-center w-full gap-2.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-all ${
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                    : "text-foreground hover:bg-muted/80"
-                }`}
-              >
-                <i
-                  className={`fas ${cat.icon} text-xs`}
-                  style={{ color: isActive ? "currentColor" : cat.color }}
-                />
-                <span className="flex-1 text-left truncate">{cat.label}</span>
-              </button>
-            );
-          }
-        )}
-      </div>
+      {/* Filter items */}
+      <FilterPanel activeFilter={activeFilter} onFilterChange={onFilterChange} />
 
       <hr className="border-border/80 my-2" />
 
+      {/* Creator Credits */}
       <div className="text-center">
         <p className="text-[9px] text-muted-foreground mb-1">Creado por:</p>
         <a
@@ -148,6 +116,7 @@ const MapLegend = ({
           <span>radarcultural_</span>
         </a>
 
+        {/* Admin actions if unlocked */}
         {isAdmin && (
           <div className="mt-2.5 pt-2 border-t border-border flex items-center justify-between text-[11px] animate-in fade-in">
             <button
@@ -160,7 +129,7 @@ const MapLegend = ({
               <button
                 onClick={onLogoutAdmin}
                 className="text-[10px] text-muted-foreground hover:text-red-500 transition-colors"
-                title="Cerrar modo Administrador (Ocultar botones)"
+                title="Cerrar modo Administrador"
               >
                 🔒 Ocultar
               </button>
@@ -168,8 +137,8 @@ const MapLegend = ({
           </div>
         )}
       </div>
-    </div>
+    </aside>
   );
 };
 
-export default MapLegend;
+export default Sidebar;
