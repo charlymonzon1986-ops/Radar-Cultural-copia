@@ -44,6 +44,7 @@ const checkClosingSoon = (dateStr: string | null) => {
   if (diffDays >= 0 && diffDays <= 7) {
     return {
       isSoon: true,
+      formattedDate: `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`,
       daysLabel:
         diffDays === 0
           ? "¡Último día hoy!"
@@ -65,7 +66,7 @@ const checkFutureInauguration = (dateStr: string | null) => {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const diffDays = Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  if (diffDays > 0) {
+  if (diffDays >= 0) {
     return {
       isFuture: true,
       diffDays,
@@ -73,6 +74,48 @@ const checkFutureInauguration = (dateStr: string | null) => {
     };
   }
   return null;
+};
+
+const getVenueFallbacks = (lugar: string) => {
+  const norm = lugar.toLowerCase();
+  let ticketUrl: string | null = null;
+  let instagramUrl = `https://www.instagram.com/explore/tags/${encodeURIComponent(
+    lugar.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()
+  )}/`;
+
+  if (norm.includes("malba")) {
+    ticketUrl = "https://www.malba.org.ar/entradas/";
+    instagramUrl = "https://www.instagram.com/museomalba/";
+  } else if (norm.includes("vorterix")) {
+    ticketUrl = "https://www.allpress.com.ar/";
+    instagramUrl = "https://www.instagram.com/teatrovorterix/";
+  } else if (norm.includes("colón") || norm.includes("colon")) {
+    ticketUrl = "https://teatrocolon.org.ar/es/temporada/";
+    instagramUrl = "https://www.instagram.com/teatrocolon/";
+  } else if (norm.includes("bellas artes")) {
+    ticketUrl = "https://www.bellasartes.gob.ar/visita/";
+    instagramUrl = "https://www.instagram.com/bellasartesargentina/";
+  } else if (norm.includes("moderno") || norm.includes("mamba")) {
+    ticketUrl = "https://museomoderno.org/entradas/";
+    instagramUrl = "https://www.instagram.com/modernoba/";
+  } else if (norm.includes("cck") || norm.includes("palacio libertad")) {
+    ticketUrl = "https://palaciolibertad.gob.ar/";
+    instagramUrl = "https://www.instagram.com/palacio_libertad/";
+  } else if (norm.includes("recoleta")) {
+    ticketUrl = "https://centroculturalrecoleta.org/";
+    instagramUrl = "https://www.instagram.com/elrecoleta/";
+  } else if (norm.includes("san martín") || norm.includes("san martin")) {
+    ticketUrl = "https://complejoteatral.gob.ar/";
+    instagramUrl = "https://www.instagram.com/elculturalsanmartin/";
+  } else if (norm.includes("usina del arte")) {
+    ticketUrl = "https://usinadelarte.ar/";
+    instagramUrl = "https://www.instagram.com/usinadelarte/";
+  } else if (norm.includes("macba")) {
+    ticketUrl = "https://macba.com.ar/";
+    instagramUrl = "https://www.instagram.com/museomacba/";
+  }
+
+  return { ticketUrl, instagramUrl };
 };
 
 const EventosPopup = ({ lugar, color, onClose }: EventosPopupProps) => {
@@ -105,35 +148,33 @@ const EventosPopup = ({ lugar, color, onClose }: EventosPopupProps) => {
     setFailedImages((prev) => ({ ...prev, [id]: true }));
   };
 
-  const instagramSearchUrl = `https://www.instagram.com/explore/tags/${encodeURIComponent(
-    lugar.replace(/\s+/g, "").toLowerCase()
-  )}/`;
+  const venueFallbacks = getVenueFallbacks(lugar);
 
   return (
     <div
       className="fixed inset-0 z-[2000] flex items-center justify-center bg-foreground/70 backdrop-blur-sm p-4 animate-in fade-in duration-150"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-card text-card-foreground rounded-3xl shadow-2xl w-full max-w-xs sm:max-w-sm md:max-w-md max-h-[82vh] overflow-y-auto custom-scrollbar border border-border">
+      <div className="bg-card text-card-foreground rounded-3xl shadow-2xl w-full max-w-xs sm:max-w-sm md:max-w-md max-h-[85vh] overflow-y-auto custom-scrollbar border border-border">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-md border-b border-border px-4 sm:px-6 py-3.5 flex justify-between items-center">
           <h2
             className="font-display text-lg sm:text-xl font-bold flex items-center gap-2"
             style={{ color }}
           >
-            <span>📅</span> Eventos
+            <span>🗓️</span> Eventos
           </h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground text-xl transition-colors"
+            className="w-8 h-8 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground text-sm font-bold transition-colors cursor-pointer"
             aria-label="Cerrar"
           >
-            ×
+            ✕
           </button>
         </div>
 
         <div className="p-4 sm:p-6 space-y-4">
-          <p className="text-xs sm:text-sm font-semibold text-muted-foreground flex items-center gap-1">
+          <p className="text-xs sm:text-sm font-bold text-muted-foreground flex items-center gap-1.5 uppercase tracking-wide">
             📍 {lugar}
           </p>
 
@@ -153,14 +194,10 @@ const EventosPopup = ({ lugar, color, onClose }: EventosPopupProps) => {
                 </p>
               </div>
               <a
-                href={instagramSearchUrl}
+                href={venueFallbacks.instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 text-xs font-bold rounded-xl px-4 py-3 text-white transition-all shadow-md hover:opacity-95 active:scale-[0.98] w-full"
-                style={{
-                  background:
-                    "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
-                }}
+                className="w-full h-11 inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold rounded-2xl px-5 text-muted-foreground bg-background border border-border/80 hover:bg-muted/40 transition-all shadow-xs active:scale-[0.98]"
               >
                 <i className="fab fa-instagram text-base" /> Ver en Instagram
               </a>
@@ -170,33 +207,37 @@ const EventosPopup = ({ lugar, color, onClose }: EventosPopupProps) => {
               {eventos.map((evt) => {
                 const imgFailed = failedImages[evt.id];
                 const showImg = evt.imagen_url && !imgFailed;
-                const ticketsUrl = evt.entrada_url || evt.fuente_url || evt.instagram_url;
                 const closingSoon = checkClosingSoon(evt.fecha_cierre);
                 const futureInaug = checkFutureInauguration(evt.fecha_evento);
+
+                // Ticket URL: event's direct entrance or source link, or venue tickets fallback
+                const ticketUrl =
+                  evt.entrada_url ||
+                  evt.fuente_url ||
+                  (evt.precio?.toLowerCase().includes("gratis")
+                    ? null
+                    : venueFallbacks.ticketUrl);
+
+                // Instagram URL: event's specific IG link or venue official IG
+                const instagramUrl = evt.instagram_url || venueFallbacks.instagramUrl;
 
                 return (
                   <div
                     key={evt.id}
-                    className="rounded-2xl border border-border/80 bg-muted/30 p-4 shadow-sm hover:shadow-md transition-shadow space-y-3"
+                    className="rounded-2xl border border-border/80 bg-muted/20 p-4 shadow-sm hover:shadow-md transition-shadow space-y-3"
                   >
                     {/* Future Inauguration banner */}
                     {futureInaug?.isFuture && (
-                      <div className="w-full bg-amber-400 hover:bg-amber-300 dark:bg-amber-500 text-amber-950 font-bold rounded-xl py-2 px-3 text-xs flex items-center justify-center gap-2 border border-amber-500/50 shadow-sm">
-                        <span>🎉</span>
+                      <div
+                        className="w-full font-bold rounded-xl py-2 px-3 text-xs sm:text-[13px] flex items-center justify-center gap-2 shadow-xs"
+                        style={{ background: "#F1B213", color: "#451a03" }}
+                      >
+                        <span className="text-sm">🎉</span>
                         <span>Inaugura el {futureInaug.formattedDate}</span>
-                        {futureInaug.diffDays === 1 ? (
-                          <span className="bg-amber-600/25 text-amber-950 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-1">
-                            ¡Mañana!
-                          </span>
-                        ) : futureInaug.diffDays <= 7 ? (
-                          <span className="bg-amber-600/25 text-amber-950 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-1">
-                            en {futureInaug.diffDays} días
-                          </span>
-                        ) : null}
                       </div>
                     )}
 
-                    <h3 className="font-bold text-base text-foreground leading-snug">
+                    <h3 className="font-display font-bold text-base sm:text-lg text-foreground leading-snug">
                       {evt.titulo}
                     </h3>
 
@@ -206,14 +247,14 @@ const EventosPopup = ({ lugar, color, onClose }: EventosPopupProps) => {
                       </p>
                     )}
 
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-medium pt-0.5">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground font-medium pt-0.5">
                       {evt.fecha_evento && (
                         <span>
-                          📅 {futureInaug?.isFuture ? "Inaugura: " : "Inicio: "}
+                          🗓️ {futureInaug?.isFuture ? "Inaugura: " : "Inicio: "}
                           {formatDate(evt.fecha_evento)}
                         </span>
                       )}
-                      {evt.hora && <span>🕐 {evt.hora}</span>}
+                      {evt.hora && <span>⏱️ {evt.hora}</span>}
                     </div>
 
                     {/* Closing soon alert */}
@@ -230,7 +271,7 @@ const EventosPopup = ({ lugar, color, onClose }: EventosPopupProps) => {
                           <p className="text-xs sm:text-sm font-bold mt-1 text-amber-900 dark:text-amber-100">
                             Cierra:{" "}
                             <span className="underline font-black text-amber-950 dark:text-amber-50">
-                              {formatDate(evt.fecha_cierre)}
+                              {closingSoon.formattedDate}
                             </span>
                           </p>
                         </div>
@@ -262,28 +303,30 @@ const EventosPopup = ({ lugar, color, onClose }: EventosPopupProps) => {
                       </div>
                     )}
 
-                    {/* Action buttons */}
-                    <div className="pt-2 flex flex-col gap-2">
-                      {ticketsUrl && (
+                    {/* Action buttons on every single event */}
+                    <div className="pt-2 flex flex-col gap-2.5">
+                      {ticketUrl && (
                         <a
-                          href={ticketsUrl}
+                          href={ticketUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full h-11 inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-bold rounded-xl px-5 bg-purple-600 text-white hover:bg-purple-700 transition-colors shadow-sm"
+                          className="w-full h-11 inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-bold rounded-2xl px-5 text-white transition-all shadow-sm hover:opacity-90 active:scale-[0.98]"
+                          style={{ background: "#9333EA" }}
                         >
-                          <span>🎟️</span> Comprar entradas
+                          <span>🎟️</span>
+                          <span>Comprar entradas</span>
                         </a>
                       )}
-                      {evt.instagram_url && (
-                        <a
-                          href={evt.instagram_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full h-11 inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold rounded-xl px-5 text-muted-foreground bg-background border border-border hover:bg-muted/50 transition-colors"
-                        >
-                          <i className="fab fa-instagram" /> Ver en Instagram
-                        </a>
-                      )}
+
+                      <a
+                        href={instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full h-11 inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold rounded-2xl px-5 text-muted-foreground bg-background border border-border/80 hover:bg-muted/40 transition-all shadow-xs active:scale-[0.98]"
+                      >
+                        <i className="fab fa-instagram text-base" />
+                        <span>Ver en Instagram</span>
+                      </a>
                     </div>
                   </div>
                 );
