@@ -47,7 +47,13 @@ export async function sendTelegramMessage(botToken, chatId, text, extra = {}) {
     });
     const data = await res.json();
     if (!res.ok || !data.ok) {
-      console.error("[Telegram Error]", JSON.stringify(data), `ChatID: ${cleanChatId}`);
+      if (data.error_code === 404) {
+        console.error(`[Telegram Error 404] "Not Found" devuelto por la API de Telegram.`);
+        console.error(`Esto significa estrictamente que el TELEGRAM_BOT_TOKEN es incorrecto o no existe en Telegram.`);
+        console.error(`Verifica que en GitHub Secrets TELEGRAM_BOT_TOKEN sea exactamente el token provisto por @BotFather (ejemplo: 7123456789:AAHkF_...).`);
+      } else {
+        console.error("[Telegram Error]", JSON.stringify(data), `ChatID: ${cleanChatId}`);
+      }
     } else {
       console.log(`[Telegram] Mensaje enviado con éxito al chat ${cleanChatId}`);
     }
