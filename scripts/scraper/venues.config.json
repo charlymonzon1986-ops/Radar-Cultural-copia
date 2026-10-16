@@ -1,0 +1,96 @@
+[
+  {
+    "venue": "Palacio Libertad (CCK)",
+    "url_agenda": "https://palaciolibertad.gob.ar/agenda/",
+    "metodo": "json-ld",
+    "selectores": null
+  },
+  {
+    "venue": "Teatro Colón",
+    "url_agenda": "https://teatrocolon.org.ar/es/calendario",
+    "metodo": "cheerio",
+    "selectores": {
+      "item": ".calendar-item",
+      "titulo": ".event-content h1",
+      "dia": ".day-number",
+      "hora": ".day-hour",
+      "entrada_url": ".buttons a",
+      "imagen_url": "figure img",
+      "categoria": ".category"
+    }
+  },
+  {
+    "venue": "MALBA",
+    "url_agenda": "https://www.malba.org.ar/exposiciones/",
+    "metodo": "cheerio",
+    "selectores": {
+      "item": "h2 a[href*='/evento/'], h3 a[href*='/evento/']"
+    }
+  },
+  {
+    "venue": "Centro Cultural Recoleta",
+    "url_agenda": "http://centroculturalrecoleta.org/agenda",
+    "metodo": "cheerio",
+    "selectores": {
+      "item": "li.box.event",
+      "titulo": "h3 span.text-ellipsis, h3",
+      "fecha": ".date span",
+      "link": "a.see-more-button",
+      "imagen_url": "picture img",
+      "categoria": "a.link1"
+    }
+  },
+  {
+    "venue": "Ciudad Cultural Konex",
+    "url_agenda": "https://www.cckonex.org",
+    "metodo": "cheerio",
+    "selectores": {
+      "item": ".lista_shows .show",
+      "titulo": ".nombre",
+      "fecha_info": ".informacion p",
+      "link": ".show_top a",
+      "categoria": ".categoria"
+    }
+  },
+  {
+    "venue": "Fundación Proa",
+    "url_agenda": "https://proa.org/esp/exhibiciones-proa-actuales.php",
+    "metodo": "cheerio",
+    "selectores": {
+      "item": "h2, h3"
+    }
+  },
+  {
+    "venue": "Colección Fortabat",
+    "url_agenda": "https://www.coleccionfortabat.org.ar/exposiciones-actuales.php",
+    "metodo": "cheerio",
+    "selectores": {
+      "item": ".featured-hero-title h2",
+      "tickets": "a[href*='feverup.com']"
+    }
+  },
+  {
+    "venue": "Museo de Arte Moderno",
+    "url_agenda": "https://museomoderno.org/exposiciones/",
+    "metodo": "cheerio",
+    "selectores": {
+      "item": "h2 a[href*='/exposiciones/'], h3 a[href*='/exposiciones/']"
+    }
+  },
+  {
+    "venue": "Artlab",
+    "url_agenda": "https://tickets.artlabpro.net",
+    "metodo": "cheerio",
+    "selectores": {
+      "item": "a[href*='/events/']"
+    }
+  },
+  {
+    "venue": "Museo Nacional de Bellas Artes",
+    "url_agenda": "https://www.bellasartes.gob.ar/agenda/",
+    "metodo": "cheerio",
+    "selectores": {
+      "item": "a[href*='/agenda/']"
+    }
+  }
+]

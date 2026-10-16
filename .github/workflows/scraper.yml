@@ -1,0 +1,49 @@
+name: Radar Cultural Scraper Diario
+
+on:
+  schedule:
+    # 08:00 AM hora de Argentina (UTC-3 -> 11:00 UTC)
+    - cron: '0 11 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Ejecutar en modo Dry-Run (sin escribir en base de datos)'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  scrape-and-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: scripts/scraper/package.json
+
+      - name: Instalar dependencias del scraper
+        run: |
+          cd scripts/scraper
+          npm ci || npm install
+
+      - name: Ejecutar Scraper Diario
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          cd scripts/scraper
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            echo "Ejecutando en modo DRY-RUN..."
+            node index.js --dry-run
+          else
+            echo "Ejecutando en modo PRODUCCIÓN..."
+            node index.js
+          fi

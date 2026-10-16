@@ -1,0 +1,15 @@
+{
+  "name": "radar-cultural-scraper",
+  "version": "1.0.0",
+  "description": "High-precision automated cultural scraper & Supabase synchronizer for Radar Cultural",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dry-run": "node index.js --dry-run"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.7"
+  }
+}
