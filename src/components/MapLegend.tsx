@@ -18,7 +18,12 @@ const MapLegend = ({
   onSecretTrigger,
   onLogoutAdmin,
 }: MapLegendProps) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 640;
+    }
+    return false;
+  });
   const [clicks, setClicks] = useState(0);
   const [lastClickTime, setLastClickTime] = useState(0);
 
@@ -41,7 +46,7 @@ const MapLegend = ({
   if (isCollapsed) {
     return (
       <div
-        className="absolute top-3 left-3 z-[1000]"
+        className="absolute top-[68px] sm:top-3 left-3 z-[1000]"
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
@@ -63,7 +68,7 @@ const MapLegend = ({
 
   return (
     <div
-      className="absolute top-3 left-3 z-[1000] w-[250px] sm:w-[260px] bg-card/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl shadow-xl border border-border animate-in fade-in zoom-in-95 duration-150 max-h-[82vh] overflow-y-auto"
+      className="absolute top-[68px] sm:top-3 left-3 z-[1000] w-[250px] sm:w-[260px] bg-card/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl shadow-xl border border-border animate-in fade-in zoom-in-95 duration-150 max-h-[82vh] overflow-y-auto"
       onMouseDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}

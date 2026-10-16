@@ -2,10 +2,11 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { createRoot } from "react-dom/client";
-import { espacios, CATEGORIAS, CategoryKey } from "@/data/espacios";
+import { espacios, CATEGORIAS, CategoryKey, Espacio } from "@/data/espacios";
 import { supabase } from "@/integrations/supabase/client";
 import MapLegend from "./MapLegend";
 import MapPopup from "./MapPopup";
+import SearchBar from "./SearchBar";
 import PhotoGalleryModal from "./PhotoGalleryModal";
 import EventosPopup from "./EventosPopup";
 import AgendaCulturalModal from "./AgendaCulturalModal";
@@ -19,6 +20,7 @@ const CulturalMap = () => {
   const markersMapRef = useRef<Map<string, L.Marker>>(new Map());
 
   const [activeFilter, setActiveFilter] = useState<CategoryKey | "TODOS">("TODOS");
+  const [searchQuery, setSearchQuery] = useState("");
   const [galleryPlace, setGalleryPlace] = useState<string | null>(null);
   const [galleryColor, setGalleryColor] = useState("#333");
   const [eventosPlace, setEventosPlace] = useState<string | null>(null);
@@ -115,16 +117,38 @@ const CulturalMap = () => {
     });
   }, []);
 
-  // Update markers when filter or events change
+  // Update markers when filter, search query, or events change
   useEffect(() => {
     const group = markersGroupRef.current;
     group.clearLayers();
     markersMapRef.current.clear();
 
+    const q = searchQuery
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+
     espacios.forEach((lugar) => {
+      const cat = CATEGORIAS[lugar.cat];
+
+      // If category filter is active, respect it unless query specifically matches another place
       if (activeFilter !== "TODOS" && lugar.cat !== activeFilter) return;
 
-      const cat = CATEGORIAS[lugar.cat];
+      // Filter by search query if present (name, category label, or category code)
+      if (q) {
+        const normName = lugar.n.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const normCatLabel = (cat?.label || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const normCatKey = lugar.cat.toLowerCase();
+
+        const matches =
+          normName.includes(q) ||
+          normCatLabel.includes(q) ||
+          normCatKey.includes(q);
+
+        if (!matches) return;
+      }
+
       const hasEvent = placesWithEvents.has(lugar.n);
       const icon = createIcon(cat.color, cat.icon, hasEvent);
       const marker = L.marker(lugar.c, { icon });
@@ -153,7 +177,23 @@ const CulturalMap = () => {
       group.addLayer(marker);
       markersMapRef.current.set(lugar.n.toLowerCase(), marker);
     });
-  }, [activeFilter, createIcon, placesWithEvents]);
+  }, [activeFilter, searchQuery, createIcon, placesWithEvents]);
+
+  const handleSelectPlaceFromSearch = (place: Espacio) => {
+    if (activeFilter !== "TODOS" && place.cat !== activeFilter) {
+      setActiveFilter("TODOS");
+    }
+
+    if (mapRef.current) {
+      mapRef.current.flyTo(place.c, 16, { duration: 1.2 });
+      setTimeout(() => {
+        const marker = markersMapRef.current.get(place.n.toLowerCase());
+        if (marker) {
+          marker.openPopup();
+        }
+      }, 350);
+    }
+  };
 
   const handleLocateMe = () => {
     mapRef.current?.locate({ setView: true, maxZoom: 16 });
@@ -191,6 +231,19 @@ const CulturalMap = () => {
   return (
     <div className="relative w-full h-screen">
       <div ref={mapContainerRef} className="w-full h-full" />
+
+      {/* Barra de búsqueda en la parte superior del mapa */}
+      <div className="absolute top-3 left-3 right-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[420px] md:w-[460px] z-[1000]">
+        <SearchBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          espacios={espacios}
+          placesWithEvents={placesWithEvents}
+          onSelectPlace={handleSelectPlaceFromSearch}
+        />
+      </div>
 
       <MapLegend
         activeFilter={activeFilter}
