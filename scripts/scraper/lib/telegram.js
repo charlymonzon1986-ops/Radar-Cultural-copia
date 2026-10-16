@@ -2,15 +2,37 @@
  * Módulo de Notificaciones y Aprobación en Telegram
  */
 
+function sanitizeToken(token) {
+  if (!token) return '';
+  let clean = String(token).trim().replace(/^["']|["']$/g, '');
+  if (clean.toLowerCase().startsWith('bot')) {
+    clean = clean.slice(3).trim();
+  }
+  return clean;
+}
+
+function sanitizeChatId(chatId) {
+  if (!chatId) return '';
+  return String(chatId).trim().replace(/^["']|["']$/g, '');
+}
+
 export async function sendTelegramMessage(botToken, chatId, text, extra = {}) {
-  if (!botToken || !chatId) {
+  const cleanToken = sanitizeToken(botToken);
+  const cleanChatId = sanitizeChatId(chatId);
+
+  if (!cleanToken || !cleanChatId) {
     console.log("[Telegram] Bot token o chat ID no configurado. Mensaje simulado:\n" + text);
     return null;
   }
 
-  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+  if (!cleanToken.includes(':')) {
+    console.error(`[Telegram Error] El TELEGRAM_BOT_TOKEN no parece válido (debe tener el formato 123456789:AAHk... con dos puntos). Se recibió: "${cleanToken.substring(0, 6)}..."`);
+    return null;
+  }
+
+  const url = `https://api.telegram.org/bot${cleanToken}/sendMessage`;
   const body = {
-    chat_id: chatId,
+    chat_id: cleanChatId,
     text,
     parse_mode: 'HTML',
     disable_web_page_preview: true,
@@ -24,8 +46,10 @@ export async function sendTelegramMessage(botToken, chatId, text, extra = {}) {
       body: JSON.stringify(body)
     });
     const data = await res.json();
-    if (!res.ok) {
-      console.error("[Telegram Error]", data);
+    if (!res.ok || !data.ok) {
+      console.error("[Telegram Error]", JSON.stringify(data), `ChatID: ${cleanChatId}`);
+    } else {
+      console.log(`[Telegram] Mensaje enviado con éxito al chat ${cleanChatId}`);
     }
     return data;
   } catch (err) {
@@ -98,17 +122,19 @@ export async function sendDailyReport(botToken, chatId, report) {
   // Enviar mensaje principal
   await sendTelegramMessage(botToken, chatId, msg);
 
-  // Enviar botones interactivos de Aprobación por cada evento nuevo pendiente
-  if (toInsert.length > 0) {
-    for (const ev of toInsert) {
+  // Enviar botones interactivos de Aprobación para eventos pendientes
+  // Para evitar sobrepasar el rate limit de Telegram (30 msgs/seg), limitamos a 5 en dry-run y 15 en prod con pausa
+  const maxCards = isDryRun ? 3 : 15;
+  const cardsToSend = toInsert.slice(0, maxCards);
+
+  if (cardsToSend.length > 0) {
+    for (const ev of cardsToSend) {
       const evText = `📌 <b>Evento Pendiente:</b>\n` +
         `<b>Título:</b> ${ev.titulo}\n` +
         `<b>Lugar:</b> ${ev.lugar}\n` +
         `<b>Fecha:</b> ${ev.fecha_evento}${ev.hora ? ' - ' + ev.hora : ''}\n` +
         `<b>Fuente:</b> <a href="${ev.fuente_url}">${ev.fuente_url}</a>`;
 
-      // Los botones llevan callback_data con un identificador (o URL de aprobación)
-      // En dry-run los botones aclaran que es simulación
       const keyboard = {
         reply_markup: {
           inline_keyboard: [
@@ -121,6 +147,12 @@ export async function sendDailyReport(botToken, chatId, report) {
       };
 
       await sendTelegramMessage(botToken, chatId, evText, keyboard);
+      // Pequeña pausa para respetar el rate limit de Telegram
+      await new Promise(r => setTimeout(r, 200));
+    }
+
+    if (toInsert.length > maxCards) {
+      await sendTelegramMessage(botToken, chatId, `<i>ℹ️ Hay ${toInsert.length - maxCards} eventos pendientes más en la cartelera.</i>`);
     }
   }
 }
