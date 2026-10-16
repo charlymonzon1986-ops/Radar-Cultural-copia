@@ -116,7 +116,7 @@ DELETE FROM public.eventos WHERE fecha_cierre < '2026-09-05' OR titulo ILIKE '%m
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-card text-card-foreground border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -143,6 +143,23 @@ DELETE FROM public.eventos WHERE fecha_cierre < '2026-09-05' OR titulo ILIKE '%m
 
         {/* Content */}
         <div className="p-5 overflow-y-auto space-y-5 text-sm">
+          {/* Quick Access to Full Admin Page */}
+          <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-between gap-3">
+            <div>
+              <p className="font-bold text-xs text-foreground">🎭 Panel de Moderación de Eventos</p>
+              <p className="text-[11px] text-muted-foreground">
+                Aprobá o rechazá eventos, gestioná fuentes de scraping y más en /admin.
+              </p>
+            </div>
+            <Link
+              to="/admin"
+              onClick={onClose}
+              className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shrink-0 transition-colors flex items-center gap-1 shadow-sm"
+            >
+              Abrir Panel →
+            </Link>
+          </div>
+
           {/* Status block */}
           <div className="p-4 rounded-xl border border-border bg-muted/20 space-y-3">
             <div className="flex items-center justify-between">
@@ -224,17 +241,7 @@ DELETE FROM public.eventos WHERE fecha_cierre < '2026-09-05' OR titulo ILIKE '%m
 
         {/* Footer */}
         <div className="p-4 border-t border-border bg-muted/20 flex flex-wrap items-center justify-between gap-2">
-          {onLogoutAdmin ? (
-            <button
-              onClick={() => {
-                onLogoutAdmin();
-                onClose();
-              }}
-              className="text-xs text-red-500 hover:text-red-600 font-medium flex items-center gap-1 hover:underline"
-            >
-              🔒 Ocultar modo Admin
-            </button>
-          ) : (
+          <div className="flex items-center gap-3">
             <Link
               to="/admin"
               onClick={onClose}
@@ -242,7 +249,18 @@ DELETE FROM public.eventos WHERE fecha_cierre < '2026-09-05' OR titulo ILIKE '%m
             >
               Ir a la página completa (/admin) →
             </Link>
-          )}
+            {onLogoutAdmin && (
+              <button
+                onClick={() => {
+                  onLogoutAdmin();
+                  onClose();
+                }}
+                className="text-xs text-red-500 hover:text-red-600 font-medium flex items-center gap-1 hover:underline"
+              >
+                🔒 Ocultar modo Admin
+              </button>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="px-4 py-1.5 text-xs font-medium rounded-lg bg-muted hover:bg-muted/80 text-foreground transition-colors ml-auto"
