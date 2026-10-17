@@ -141,16 +141,17 @@ export async function sendDailyReport(botToken, chatId, report) {
         `<b>Fecha:</b> ${ev.fecha_evento}${ev.hora ? ' - ' + ev.hora : ''}\n` +
         `<b>Fuente:</b> <a href="${ev.fuente_url}">${ev.fuente_url}</a>`;
 
-      const keyboard = {
+      // Sin id (dry-run) no hay evento que aprobar: la tarjeta se envía sin botones
+      const keyboard = ev.id ? {
         reply_markup: {
           inline_keyboard: [
             [
-              { text: "✅ Aprobar", callback_data: `approve:${ev.titulo.substring(0, 25)}` },
-              { text: "❌ Rechazar", callback_data: `reject:${ev.titulo.substring(0, 25)}` }
+              { text: "✅ Aprobar", callback_data: `approve:${ev.id}` },
+              { text: "❌ Rechazar", callback_data: `reject:${ev.id}` }
             ]
           ]
         }
-      };
+      } : {};
 
       await sendTelegramMessage(botToken, chatId, evText, keyboard);
       // Pequeña pausa para respetar el rate limit de Telegram
