@@ -1,18 +1,17 @@
-name: Bot de aprobaciones Telegram
+name: Bot Radar Cultural (Telegram)
 
 on:
   schedule:
-    # Cada 5 minutos
+    # Cada 5 minutos: lee mensajes y botones pendientes
     - cron: '*/5 * * * *'
   workflow_dispatch:
 
-# Evita que dos corridas lean los mismos updates a la vez
 concurrency:
-  group: bot-aprobaciones
+  group: bot-radar-cultural
   cancel-in-progress: false
 
 jobs:
-  procesar-aprobaciones:
+  procesar-mensajes:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -29,10 +28,11 @@ jobs:
         working-directory: scripts/scraper
         run: npm install --omit=dev
 
-      - name: Procesar clics de Telegram
+      - name: Procesar mensajes y botones de Telegram
         working-directory: scripts/scraper
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        run: node approval-poll.js
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node bot.js
