@@ -4,7 +4,7 @@
  */
 import dotenv from 'dotenv';
 import { getSupabaseClient } from './lib/database.js';
-import { parseIntent, validateField, CAMPOS_EDITABLES, normalize, esc } from './lib/intents.js';
+import { parseIntent, validateField, CAMPOS_EDITABLES, normalize, esc, extraerCredito } from './lib/intents.js';
 
 dotenv.config();
 
@@ -16,6 +16,8 @@ if (!token || !CHAT_ID) {
 }
 
 const MAX_BATCH = 200;
+const GH_REPO = process.env.GITHUB_REPO || 'charlymonzon1986-ops/Radar-Cultural-copia';
+const GH_TOKEN = (process.env.GH_TOKEN_ACTIONS || '').trim();
 const VENCE_MIN = 24 * 60; // las acciones pendientes de confirmación vencen a las 24 h
 
 // ---------- Telegram ----------
@@ -75,7 +77,7 @@ function escLike(s) {
 }
 
 async function buscarEventos(supabase, texto, { estado } = {}) {
-  let q = supabase.from('eventos').select('id, titulo, lugar, fecha_evento, fecha_cierre, hora, precio, estado, entrada_url').ilike('titulo', `%${escLike(texto)}%`).limit(10);
+  let q = supabase.from('eventos').select('id, titulo, lugar, fecha_evento, fecha_cierre, hora, precio, estado, entrada_url, imagen_url').ilike('titulo', `%${escLike(texto)}%`).limit(10);
   if (estado) q = q.eq('estado', estado);
   const { data, error } = await q;
   if (error) throw error;
@@ -94,6 +96,9 @@ function tarjetaEvento(ev) {
     filas.push([{ text: '✅ Aprobar', callback_data: `approve:${ev.id}` }, { text: '❌ Rechazar', callback_data: `reject:${ev.id}` }]);
   }
   filas.push([{ text: '✏️ Modificar', callback_data: `mod:${ev.id}` }, { text: '🗑 Borrar', callback_data: `del:${ev.id}` }]);
+  if (ev.estado === 'aprobado' && ev.imagen_url) {
+    filas.push([{ text: '🎬 Hacer reel', callback_data: `reel:${ev.id}` }]);
+  }
   return { texto, filas };
 }
 
@@ -145,6 +150,21 @@ async function accionAbiertaValor(supabase) {
 }
 
 // ---------- Acciones de negocio ----------
+async function dispararReel(eventoId, credito = '') {
+  if (!GH_TOKEN) throw new Error('Falta el secret GH_TOKEN_ACTIONS.');
+  const res = await fetch(`https://api.github.com/repos/${GH_REPO}/actions/workflows/render-reel.yml/dispatches`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${GH_TOKEN}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ ref: 'main', inputs: { evento_id: String(eventoId), credito: credito || '' } })
+  });
+  if (res.status !== 204) throw new Error(`GitHub respondió ${res.status} al pedir el render.`);
+  return send('🎬 Reel en marcha. Te lo mando al chat cuando esté listo (suele tardar 3 a 6 minutos).');
+}
 async function pedirConfirmacionBorrado(supabase, ids, descripcion) {
   if (ids.length === 0) return send('No hay eventos para borrar.');
   if (ids.length > MAX_BATCH) return send(`Son ${ids.length} eventos. El límite por confirmación es ${MAX_BATCH}; hay que hacerlo en partes.`);
@@ -239,6 +259,14 @@ async function handleMessage(supabase, msg) {
       return listarPendientes(supabase);
     case 'vencidos':
       return listarVencidos(supabase);
+
+    case 'reel': {
+      if (!arg) return send('¿De qué evento hago el reel? Ejemplo: <i>hacé un reel de Biópera @artlab</i>');
+      const lista = (await buscarEventos(supabase, arg, { estado: 'aprobado' })).filter(e => e.imagen_url);
+      if (lista.length === 0) return send(`No encontré eventos aprobados con imagen que coincidan con "${esc(arg)}".`);
+      if (lista.length > 1) return mostrarEventos(lista, `Hay ${lista.length} coincidencias. Elegí cuál:`);
+      return dispararReel(lista[0].id, extraerCredito(texto));
+    }
 
     case 'buscar': {
       if (!arg) return send('¿Qué busco? Ejemplo: <i>buscá teatro colón</i>');
@@ -356,6 +384,13 @@ async function handleCallback(supabase, q) {
       if (partes[1] === 'pendientes') return listarPendientes(supabase);
       if (partes[1] === 'vencidos') return listarVencidos(supabase);
       return;
+    }
+
+    case 'reel': {
+      await answer(q.id);
+      const { data } = await supabase.from('eventos').select('id, estado, imagen_url').eq('id', partes[1]).maybeSingle();
+      if (!data || data.estado !== 'aprobado' || !data.imagen_url) return send('Ese evento ya no es válido para un reel (tiene que estar aprobado y con imagen).');
+      return dispararReel(data.id, '');
     }
 
     case 'done':
