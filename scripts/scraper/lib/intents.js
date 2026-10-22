@@ -76,6 +76,12 @@ export function parseIntent(texto) {
   }
   if (/^(pendientes?)$/.test(t)) return { intent: 'pendientes', arg: '' };
 
+  // "hacé un reel de Biópera", "armá un clip de teatro colón"
+  if (/^(hace|haz|arma|crea|genera|renderiza|quiero)/.test(verbo) && /\b(reel|clip|video)\b/.test(t)) {
+    const limpio = resto.join(' ').replace(/\b(reel|clip|video|de|del|la|el|un|una|para)\b/g, ' ').replace(/\s+/g, ' ').trim();
+    return { intent: 'reel', arg: limpio };
+  }
+
   if (/^(aprob|aprueb)/.test(verbo)) return { intent: 'aprobar', arg };
   if (/^(rechaz|descart)/.test(verbo)) return { intent: 'rechazar', arg };
   if (/^(borr|elimin|quit)/.test(verbo)) return { intent: 'borrar', arg };
@@ -83,4 +89,10 @@ export function parseIntent(texto) {
   if (/^(busc|encuentr|mostr|ver)/.test(verbo)) return { intent: 'buscar', arg };
 
   return { intent: 'desconocido', arg: texto.trim() };
+}
+
+/** Extrae el crédito tipo @cuenta del texto (si existe). */
+export function extraerCredito(texto = '') {
+  const m = /@[\w.]+/.exec(texto);
+  return m ? m[0] : '';
 }
