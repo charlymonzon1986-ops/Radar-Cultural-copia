@@ -77,11 +77,13 @@ function escLike(s) {
 }
 
 async function buscarEventos(supabase, texto, { estado } = {}) {
-  let q = supabase.from('eventos').select('id, titulo, lugar, fecha_evento, fecha_cierre, hora, precio, estado, entrada_url, imagen_url').ilike('titulo', `%${escLike(texto)}%`).limit(10);
+  let q = supabase.from('eventos').select('id, titulo, lugar, fecha_evento, fecha_cierre, hora, precio, estado, entrada_url, imagen_url');
   if (estado) q = q.eq('estado', estado);
-  const { data, error } = await q;
+  const { data, error } = await q.limit(1000);
   if (error) throw error;
-  return data || [];
+  // Comparación sin acentos en el código: la base no ignora tildes en ilike
+  const buscado = normalize(texto);
+  return (data || []).filter(e => normalize(e.titulo).includes(buscado)).slice(0, 10);
 }
 
 function tarjetaEvento(ev) {
