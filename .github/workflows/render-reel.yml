@@ -1,0 +1,72 @@
+name: Render de reel (Remotion)
+
+on:
+  workflow_dispatch:
+    inputs:
+      evento_id:
+        description: 'ID del evento aprobado con imagen'
+        required: true
+        type: string
+      credito:
+        description: 'Crédito de la foto, ej. @cuenta (opcional)'
+        required: false
+        type: string
+        default: ''
+
+concurrency:
+  group: render-reel
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar dependencias de reels
+        working-directory: scripts/reels
+        run: npm install --no-audit --no-fund
+
+      - name: Renderizar video
+        id: render
+        working-directory: scripts/reels
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          EVENTO_ID: ${{ inputs.evento_id }}
+          CREDITO: ${{ inputs.credito }}
+        run: node render.js "$RUNNER_TEMP/reel.mp4"
+
+      - name: "Verificar tamaño (límite de Telegram 50 MB)"
+        run: |
+          TAMANO=$(stat -c%s "$RUNNER_TEMP/reel.mp4")
+          echo "Tamaño: $TAMANO bytes"
+          if [ "$TAMANO" -gt 52428800 ]; then echo "El video supera 50 MB"; exit 1; fi
+
+      - name: Enviar video a Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          EVENTO_ID: ${{ inputs.evento_id }}
+        run: |
+          curl -sf -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo" \
+            -F "chat_id=${TELEGRAM_CHAT_ID}" \
+            -F "supports_streaming=true" \
+            -F "caption=🎬 Reel listo (evento ${EVENTO_ID})" \
+            -F "video=@${RUNNER_TEMP}/reel.mp4" > /dev/null
+          echo "Video enviado."
+
+      - name: Guardar video como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: reel-${{ inputs.evento_id }}
+          path: ${{ runner.temp }}/reel.mp4
+          retention-days: 7
