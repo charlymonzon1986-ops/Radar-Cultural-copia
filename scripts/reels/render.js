@@ -16,6 +16,13 @@ const salida = process.argv[3] || (process.argv[2] && !process.argv[2].startsWit
 
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
+// Convierte "sáb_17.00 hs" o "jue_20.30 hs" a "17:00" / "20:30". Si no reconoce el formato, devuelve vacío.
+function formatHora(h) {
+  const m = /(\d{1,2})[.:](\d{2})/.exec(h || '');
+  if (!m) return '';
+  return `${String(Number(m[1])).padStart(2, '0')}:${m[2]}`;
+}
+
 function formatFecha(f) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(f || '');
   if (!m) return f || '';
@@ -38,7 +45,7 @@ async function propsDesdeSupabase(eventoId, credito) {
     titulo: ev.titulo,
     lugar: ev.lugar,
     fecha: formatFecha(ev.fecha_evento),
-    hora: ev.hora || '',
+    hora: formatHora(ev.hora),
     imagen: ev.imagen_url,
     credito: credito || ''
   };
