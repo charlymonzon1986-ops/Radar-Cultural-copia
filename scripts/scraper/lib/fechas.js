@@ -22,19 +22,21 @@ const pad = (n) => String(n).padStart(2, '0');
 const iso = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
 
 /**
- * Si la fecha no trae año, elige el año más cercano a "hoy":
- * si quedó más de 30 días atrás, se asume el año siguiente.
+ * Si la fecha no trae año, usa el año actual. Si esa fecha quedó más de 30 días atrás,
+ * NO se asume el año siguiente: puede ser un evento pasado o el fin de un rango,
+ * así que devuelve null (va a Dudosos para revisión manual).
  */
 function inferirAnio(mes, dia, hoy) {
   const y = hoy.getUTCFullYear();
   const candidata = new Date(Date.UTC(y, mes - 1, dia));
   const hace30 = new Date(hoy.getTime() - 30 * 24 * 3600 * 1000);
-  return candidata < hace30 ? y + 1 : y;
+  return candidata < hace30 ? null : y;
 }
 
 /**
  * Devuelve YYYY-MM-DD o null.
- * Acepta: "2026-10-24", "24/10/2026", "24 de octubre de 2026", "24 de octubre", "sáb 24 oct".
+ * Acepta: "2026-10-24", "24/10/2026", "24 de octubre de 2026", "24 de octubre" y "sáb 24 oct"
+ * (las fechas sin año solo se aceptan si no quedaron más de 30 días atrás).
  * NO acepta un número suelto ("16.") porque sería ambiguo: devuelve null.
  */
 export function parseSpanishDate(text, hoy = new Date()) {
@@ -56,6 +58,7 @@ export function parseSpanishDate(text, hoy = new Date()) {
       const mes = Number(numero);
       if (dia < 1 || dia > 31) return null;
       const anio = m[2] ? Number(m[2]) : inferirAnio(mes, dia, hoy);
+      if (!anio) return null; // fecha sin año y lejana: ambigua
       return iso(anio, mes, dia);
     }
   }
