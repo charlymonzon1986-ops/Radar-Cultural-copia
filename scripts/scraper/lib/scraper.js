@@ -1,4 +1,7 @@
 import * as cheerio from 'cheerio';
+import { parseSpanishDate, normalizeHora } from './fechas.js';
+
+export { parseSpanishDate, normalizeHora };
 
 const COMMON_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -13,63 +16,6 @@ const COMMON_HEADERS = {
   'Upgrade-Insecure-Requests': '1'
 };
 
-const MESES = {
-  'ene': '01', 'enero': '01',
-  'feb': '02', 'febrero': '02',
-  'mar': '03', 'marzo': '03',
-  'abr': '04', 'abril': '04',
-  'may': '05', 'mayo': '05',
-  'jun': '06', 'junio': '06',
-  'jul': '07', 'julio': '07',
-  'ago': '08', 'agosto': '08',
-  'sep': '09', 'septiembre': '09', 'setiembre': '09',
-  'oct': '10', 'octubre': '10',
-  'nov': '11', 'noviembre': '11',
-  'dic': '12', 'diciembre': '12'
-};
-
-/**
- * Normaliza fechas en español a YYYY-MM-DD
- */
-export function parseSpanishDate(text, defaultYear = 2026) {
-  if (!text) return null;
-  const clean = text.toLowerCase().trim();
-
-  // YYYY-MM-DD
-  const isoMatch = clean.match(/(\d{4})-(\d{2})-(\d{2})/);
-  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
-
-  // DD/MM/YYYY o DD-MM-YYYY
-  const dmyMatch = clean.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-  if (dmyMatch) {
-    const d = dmyMatch[1].padStart(2, '0');
-    const m = dmyMatch[2].padStart(2, '0');
-    return `${dmyMatch[3]}-${m}-${d}`;
-  }
-
-  // DD de [mes] de YYYY o DD de [mes]
-  for (const [mesNombre, mesNum] of Object.entries(MESES)) {
-    const regex = new RegExp(`(\\d{1,2})\\s*(?:de)?\\s*${mesNombre}(?:\\s*(?:de)?\\s*(\\d{4}))?`, 'i');
-    const match = clean.match(regex);
-    if (match) {
-      const day = match[1].padStart(2, '0');
-      const year = match[2] || defaultYear;
-      return `${year}-${mesNum}-${day}`;
-    }
-  }
-
-  // Si es un día del mes actual (ej: "16." o "16")
-  const simpleDayMatch = clean.match(/^(\d{1,2})\.?$/);
-  if (simpleDayMatch) {
-    const now = new Date();
-    const day = simpleDayMatch[1].padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const year = now.getFullYear();
-    return `${year}-${month}-${day}`;
-  }
-
-  return null;
-}
 
 /**
  * Scraper específico por Venue
@@ -144,7 +90,7 @@ export async function scrapeVenue(config) {
             titulo: title,
             descripcion: category ? `Categoría: ${category}` : null,
             fecha_evento: date,
-            hora: horaText || null,
+            hora: normalizeHora(horaText),
             fuente_url: ticketUrl || url_agenda,
             entrada_url: ticketUrl,
             imagen_url: imgUrl,
@@ -180,7 +126,7 @@ export async function scrapeVenue(config) {
         const fullUrl = linkHref.startsWith('http') ? linkHref : `http://centroculturalrecoleta.org${linkHref}`;
         const imgUrl = item.find('picture img').attr('src') || null;
 
-        const date = parseSpanishDate(dateText) || '2026-01-01';
+        const date = parseSpanishDate(dateText); // sin fecha legible: null (va a Dudosos)
         if (title && title.length > 2) {
           results.push({
             lugar: venue,
