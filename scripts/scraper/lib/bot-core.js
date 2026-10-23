@@ -392,3 +392,4 @@ export async function procesarUpdate(update) {
   if (update.callback_query) return handleCallback(supabase, update.callback_query);
   if (update.message) return handleMessage(supabase, update.message);
 }
+
