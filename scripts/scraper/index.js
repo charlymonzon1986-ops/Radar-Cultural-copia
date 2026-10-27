@@ -6,6 +6,7 @@ import { scrapeVenue } from './lib/scraper.js';
 import { validateEvent } from './lib/validator.js';
 import { getSupabaseClient, getVenuesSet, syncEventsWithSupabase } from './lib/database.js';
 import { sendDailyReport } from './lib/telegram.js';
+import { obtenerEventosGCBA } from './lib/sources/gcba.js';
 
 dotenv.config();
 
@@ -49,6 +50,10 @@ async function run() {
   const allExtractedEvents = [];
   const failedVenues = [];
   const unknownVenues = [];
+
+  // 3a. Capa 1: fuentes oficiales GCBA, filtradas contra el catálogo (validVenuesSet)
+  const gcba = await obtenerEventosGCBA(validVenuesSet, new Date().toISOString().slice(0, 10));
+  for (const f of gcba.fallos) failedVenues.push({ venue: f.nombre, error: f.error });
 
   for (const config of venuesConfig) {
     if (config.metodo === 'manual') {
@@ -94,6 +99,9 @@ async function run() {
     }
   }
 
+  // Unificar: eventos GCBA (ya filtrados) + privados validados
+  validEvents.push(...gcba.eventos);
+
   // Deduplicar: el mismo evento puede llegar repetido desde una misma fuente en una corrida
   const vistos = new Set();
   const validEventsUnicos = [];
@@ -129,7 +137,7 @@ async function run() {
   }
 
   console.log(`\n📊 Resumen de sincronización:`);
-  console.log(`   - Nuevos a insertar (estado='pendiente'): ${syncResult.toInsert.length}`);
+  console.log(`   - Nuevos a insertar (estado='aprobado'): ${syncResult.toInsert.length}`);
   console.log(`   - Modificados a actualizar: ${syncResult.toUpdate.length}`);
   console.log(`   - Eliminados por vencimiento: ${syncResult.toDelete.length}`);
   if (syncResult.deleteBlockedByCircuitBreaker) {
