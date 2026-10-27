@@ -115,9 +115,10 @@ export function csvToEventos(texto, { lugarFijo = null } = {}) {
 export function icsToEventos(texto, { lugarFijo = null } = {}) {
   return parseICS(texto)
     .filter((e) => e.titulo && e.fecha_evento)
+    .filter((e) => e.lugar || lugarFijo)
     .map((e) => ({
       ...e,
-      lugar: lugarFijo || mapLugar(e.lugar),
+      lugar: mapLugar(e.lugar) || lugarFijo,
       imagen_url: null,
       entrada_url: null,
       precio: null
@@ -142,28 +143,52 @@ export function filtrarPorCatalogo(eventos, validVenuesSet, hoy) {
   return { aceptados, descartados };
 }
 
-/** Resuelve la URL del recurso (ICS o CSV) desde CKAN. */
-export async function recursoUrl(dataset, formatos) {
+// Texto seguro para Telegram (sin <, > ni &, y corto)
+const seguro = (t) => String(t || '').replace(/[<>&]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
+
+/** Resuelve las URLs de TODOS los recursos del formato pedido desde CKAN. */
+export async function recursosUrls(dataset, formato) {
   const res = await fetch(CKAN + encodeURIComponent(dataset), { headers: UA, signal: AbortSignal.timeout(20000) });
-  if (!res.ok) throw new Error(`CKAN ${dataset}: HTTP ${res.status}`);
-  const json = await res.json();
-  if (!json.success) throw new Error(`CKAN ${dataset}: respuesta sin éxito`);
-  const recursos = json.result?.resources || [];
-  for (const f of formatos) {
-    const r = recursos.find((x) => String(x.format || '').toUpperCase() === f && x.url);
-    if (r) return r.url;
+  const tipo = res.headers.get('content-type') || '';
+  if (!res.ok) throw new Error(`CKAN ${dataset}: HTTP ${res.status} (${seguro(tipo)})`);
+  const cuerpo = await res.text();
+  if (!cuerpo.trim().startsWith('{')) {
+    throw new Error(`CKAN ${dataset}: respuesta no JSON (${seguro(tipo)}): ${seguro(cuerpo)}`);
   }
-  throw new Error(`sin recurso ${formatos.join('/')} en ${dataset}`);
+  const json = JSON.parse(cuerpo);
+  if (!json.success) throw new Error(`CKAN ${dataset}: respuesta sin éxito`);
+  const urls = (json.result?.resources || [])
+    .filter((x) => String(x.format || '').toUpperCase() === formato && x.url)
+    .map((x) => x.url);
+  if (urls.length === 0) throw new Error(`sin recursos ${formato} en ${dataset}`);
+  return urls;
 }
 
-async function leerFuente(fuente) {
-  const url = await recursoUrl(fuente.dataset, fuente.formatos);
+async function descargar(url) {
   const res = await fetch(url, { headers: UA, signal: AbortSignal.timeout(30000) });
   if (!res.ok) throw new Error(`descarga HTTP ${res.status}`);
-  const texto = await res.text();
-  return fuente.tipo === 'ics'
-    ? icsToEventos(texto, { lugarFijo: fuente.lugarFijo })
-    : csvToEventos(texto, { lugarFijo: fuente.lugarFijo });
+  return res.text();
+}
+
+/** ICS: lee todos los calendarios del dataset. Un calendario que falla no frena a los demás. */
+async function leerFuente(fuente) {
+  if (fuente.tipo === 'csv') {
+    const [url] = await recursosUrls(fuente.dataset, fuente.formatos[0]);
+    return csvToEventos(await descargar(url), { lugarFijo: fuente.lugarFijo });
+  }
+  const urls = await recursosUrls(fuente.dataset, fuente.formatos[0]);
+  const eventos = [];
+  let fallidos = 0;
+  for (const url of urls) {
+    try {
+      eventos.push(...icsToEventos(await descargar(url), { lugarFijo: fuente.lugarFijo }));
+    } catch {
+      fallidos++;
+    }
+  }
+  if (fallidos === urls.length) throw new Error(`ningún calendario se pudo leer (${fallidos}/${urls.length})`);
+  console.log(`🏛️ [GCBA] ${fuente.nombre}: ${urls.length - fallidos}/${urls.length} calendarios leídos`);
+  return eventos;
 }
 
 /**
