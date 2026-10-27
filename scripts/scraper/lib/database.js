@@ -90,7 +90,7 @@ export async function syncEventsWithSupabase(supabase, validEvents, options = {}
         tipo_evento: ev.tipo_evento || null,
         fuente_url: ev.fuente_url,
         imagen_url: ev.imagen_url || null,
-        estado: 'pendiente',
+        estado: 'aprobado',
         es_proximo: esProximo
       });
     } else {
