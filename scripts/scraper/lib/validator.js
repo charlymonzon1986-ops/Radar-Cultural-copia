@@ -4,10 +4,12 @@
  * Reglas no negociables:
  * 1. El título debe aparecer literalmente en el texto de la página fuente.
  * 2. La fecha debe aparecer en el texto y ser futura (dentro de los próximos 12 meses),
- *    o cumplir la convención de permanente/recurrente ('2026-01-01').
+ *    o cumplir la convención de permanente/recurrente (FECHA_PERMANENTE).
  * 3. Tiene fuente_url que responde con status 200.
  * 4. El venue existe en la lista de 'lugares'.
  */
+
+import { FECHA_PERMANENTE } from './constantes.js';
 
 export async function validateEvent(event, sourceHtml, validVenuesSet) {
   const reasons = [];
@@ -37,12 +39,12 @@ export async function validateEvent(event, sourceHtml, validVenuesSet) {
   // 3. Validar Fecha
   if (!event.fecha_evento) {
     reasons.push("Fecha ausente (no se permiten eventos sin fecha)");
-  } else if (event.fecha_evento === '2026-01-01') {
+  } else if (event.fecha_evento === FECHA_PERMANENTE) {
     // Convención permanente: válida por definición
   } else {
     const eventDate = new Date(event.fecha_evento + 'T00:00:00Z');
     if (isNaN(eventDate.getTime())) {
-      reasons.push(`Formato de fecha inválido: "${event.fecha_evento}" (debe ser YYYY-MM-DD o '2026-01-01')`);
+      reasons.push(`Formato de fecha inválido: "${event.fecha_evento}" (debe ser YYYY-MM-DD o '${FECHA_PERMANENTE}')`);
     } else {
       const now = new Date();
       now.setUTCHours(0, 0, 0, 0);
