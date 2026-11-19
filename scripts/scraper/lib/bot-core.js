@@ -4,6 +4,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { parseIntent, validateField, CAMPOS_EDITABLES, normalize, esc, extraerCredito } from './intents.js';
+import { FECHA_PERMANENTE } from './constantes.js';
 
 const token = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
 const CHAT_ID = String(process.env.TELEGRAM_CHAT_ID || '').trim();
@@ -52,7 +53,7 @@ async function markMessage(message, label) {
 const hoy = () => new Date().toISOString().slice(0, 10);
 
 function esVencido(ev) {
-  if (ev.fecha_evento === '2026-01-01') return false; // recurrentes nunca vencen
+  if (ev.fecha_evento === FECHA_PERMANENTE) return false; // recurrentes nunca vencen
   const ref = ev.fecha_cierre || ev.fecha_evento;
   return !!ref && ref < hoy();
 }
@@ -392,4 +393,3 @@ export async function procesarUpdate(update) {
   if (update.callback_query) return handleCallback(supabase, update.callback_query);
   if (update.message) return handleMessage(supabase, update.message);
 }
-
