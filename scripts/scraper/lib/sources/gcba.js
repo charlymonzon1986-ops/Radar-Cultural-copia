@@ -4,6 +4,7 @@
  */
 import { parseSpanishDate, normalizeHora } from '../fechas.js';
 import { parseICS } from '../ics.js';
+import { FECHA_PERMANENTE } from '../constantes.js';
 
 const CKAN = 'https://data.buenosaires.gob.ar/api/3/action/package_show?id=';
 const UA = { 'User-Agent': 'RadarCulturalBot/1.0 (agenda cultural; contacto: datosabiertos)' };
@@ -135,7 +136,7 @@ export function filtrarPorCatalogo(eventos, validVenuesSet, hoy) {
   for (const ev of eventos) {
     if (!ev.lugar || !validVenuesSet.has(ev.lugar)) { descartados++; continue; }
     if (!ev.titulo || !ev.fecha_evento) { descartados++; continue; }
-    const permanente = ev.fecha_evento === '2026-01-01';
+    const permanente = ev.fecha_evento === FECHA_PERMANENTE;
     const ref = ev.fecha_cierre || ev.fecha_evento;
     if (!permanente && ref < hoy) { descartados++; continue; }
     aceptados.push(ev);
