@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { parseSpanishDate, normalizeHora } from './fechas.js';
+import { FECHA_PERMANENTE } from './constantes.js';
 
 export { parseSpanishDate, normalizeHora };
 
@@ -111,7 +112,7 @@ export async function scrapeVenue(config) {
             lugar: venue,
             titulo: title,
             descripcion: 'Exposición en MALBA',
-            fecha_evento: '2026-01-01', // Exposiciones en curso convención permanente/recurrente
+            fecha_evento: FECHA_PERMANENTE, // Exposiciones en curso convención permanente/recurrente
             fuente_url: fullUrl,
             raw_text: rawHtml
           });
@@ -168,7 +169,7 @@ export async function scrapeVenue(config) {
             lugar: venue,
             titulo: title,
             descripcion: 'Exposición actual en Fundación Proa',
-            fecha_evento: '2026-01-01',
+            fecha_evento: FECHA_PERMANENTE,
             fuente_url: url_agenda,
             raw_text: rawHtml
           });
@@ -181,7 +182,7 @@ export async function scrapeVenue(config) {
         lugar: venue,
         titulo: title,
         descripcion: 'Arte argentino de los siglos XIX, XX y XXI en Colección Fortabat',
-        fecha_evento: '2026-01-01',
+        fecha_evento: FECHA_PERMANENTE,
         fuente_url: url_agenda,
         entrada_url: ticketsUrl,
         raw_text: rawHtml
@@ -196,7 +197,7 @@ export async function scrapeVenue(config) {
             lugar: venue,
             titulo: title,
             descripcion: 'Exposición en el Museo de Arte Moderno de Buenos Aires',
-            fecha_evento: '2026-01-01',
+            fecha_evento: FECHA_PERMANENTE,
             fuente_url: href,
             raw_text: rawHtml
           });
@@ -251,7 +252,7 @@ export async function scrapeVenue(config) {
             lugar: venue,
             titulo: title,
             descripcion: 'Actividad en Museo Nacional de Bellas Artes',
-            fecha_evento: '2026-01-01',
+            fecha_evento: FECHA_PERMANENTE,
             fuente_url: href.startsWith('http') ? href : `https://www.bellasartes.gob.ar${href}`,
             raw_text: rawHtml
           });
