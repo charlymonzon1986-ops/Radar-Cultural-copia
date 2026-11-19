@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { FECHA_PERMANENTE } from './constantes.js';
 
 export function getSupabaseClient() {
   const url = process.env.SUPABASE_URL || 'https://boeurmldeqvcaikdhtvy.supabase.co';
@@ -41,7 +42,7 @@ export async function getCurrentEvents(supabase) {
  * Calcula si una fecha está dentro de los próximos 7 días
  */
 export function calculateEsProximo(fechaEvento) {
-  if (!fechaEvento || fechaEvento === '2026-01-01') return false;
+  if (!fechaEvento || fechaEvento === FECHA_PERMANENTE) return false;
   const eventDate = new Date(fechaEvento + 'T00:00:00Z');
   const now = new Date();
   now.setUTCHours(0, 0, 0, 0);
@@ -112,14 +113,14 @@ export async function syncEventsWithSupabase(supabase, validEvents, options = {}
   }
 
   // Identificar eventos para eliminar:
-  // Vencidos (que no sean recurrentes '2026-01-01')
+  // Vencidos (que no sean recurrentes, es decir, FECHA_PERMANENTE)
   const toDelete = [];
   const now = new Date();
   now.setUTCHours(0, 0, 0, 0);
 
   for (const existing of existingEvents) {
-    // Si es recurrente '2026-01-01', NUNCA se elimina por vencimiento
-    if (existing.fecha_evento === '2026-01-01') continue;
+    // Si es recurrente (FECHA_PERMANENTE), NUNCA se elimina por vencimiento
+    if (existing.fecha_evento === FECHA_PERMANENTE) continue;
 
     if (existing.fecha_evento) {
       const eventDate = new Date(existing.fecha_evento + 'T00:00:00Z');
