@@ -10,8 +10,12 @@ import SearchBar from "./SearchBar";
 import PhotoGalleryModal from "./PhotoGalleryModal";
 import EventosPopup from "./EventosPopup";
 import AgendaCulturalModal from "./AgendaCulturalModal";
-import AdminPasswordModal from "./AdminPasswordModal";
-import AdminSyncModal from "./AdminSyncModal";
+
+// El panel de administración se quitó del cliente: las escrituras sobre
+// `eventos` no se hacen desde el navegador (ver RLS). Los props de admin
+// de Sidebar/MapLegend se mantienen en false/no-op.
+const isAdmin = false;
+const noop = () => {};
 
 const CulturalMap = () => {
   const mapRef = useRef<L.Map | null>(null);
@@ -28,43 +32,11 @@ const CulturalMap = () => {
   const [isDark, setIsDark] = useState(false);
   const [placesWithEvents, setPlacesWithEvents] = useState<Set<string>>(new Set());
 
-  // Agenda & Admin modals
+  // Agenda modal
   const [showAgenda, setShowAgenda] = useState(false);
-  const [showAdminPin, setShowAdminPin] = useState(false);
-  const [showAdminSync, setShowAdminSync] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   const lightTilesRef = useRef<L.TileLayer | null>(null);
   const darkTilesRef = useRef<L.TileLayer | null>(null);
-
-  // Initialize admin status from localStorage or URL
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("radar_admin_access");
-      const urlParams = new URLSearchParams(window.location.search);
-      if (saved === "true" || urlParams.get("admin") === "2026") {
-        setIsAdmin(true);
-      }
-    } catch {}
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "A" || e.key === "a")) {
-        e.preventDefault();
-        setShowAdminPin(true);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  const handleLogoutAdmin = () => {
-    try {
-      localStorage.removeItem("radar_admin_access");
-    } catch {}
-    setIsAdmin(false);
-    setShowAdminSync(false);
-  };
 
   // Fetch places that have approved events
   useEffect(() => {
@@ -249,9 +221,9 @@ const CulturalMap = () => {
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
         isAdmin={isAdmin}
-        onOpenAdmin={() => setShowAdminSync(true)}
-        onSecretTrigger={() => setShowAdminPin(true)}
-        onLogoutAdmin={handleLogoutAdmin}
+        onOpenAdmin={noop}
+        onSecretTrigger={noop}
+        onLogoutAdmin={noop}
       />
 
       {/* Floating controls */}
@@ -280,16 +252,6 @@ const CulturalMap = () => {
           <i className="fas fa-calendar-days text-purple-600 dark:text-purple-400" />
         </button>
 
-        {isAdmin && (
-          <button
-            onClick={() => setShowAdminSync(true)}
-            title="Panel de Administración y Sincronización"
-            className="w-12 h-12 rounded-full bg-card border border-purple-500 shadow-lg flex items-center justify-center text-foreground text-lg transition-transform hover:scale-110 active:scale-95 cursor-pointer relative animate-in fade-in"
-          >
-            <i className="fas fa-gear text-purple-600 dark:text-purple-400" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-card" />
-          </button>
-        )}
       </div>
 
       {galleryPlace && (
@@ -315,23 +277,6 @@ const CulturalMap = () => {
         />
       )}
 
-      {showAdminPin && (
-        <AdminPasswordModal
-          onClose={() => setShowAdminPin(false)}
-          onSuccess={() => {
-            setIsAdmin(true);
-            setShowAdminPin(false);
-            setShowAdminSync(true);
-          }}
-        />
-      )}
-
-      {showAdminSync && (
-        <AdminSyncModal
-          onClose={() => setShowAdminSync(false)}
-          onLogoutAdmin={handleLogoutAdmin}
-        />
-      )}
     </div>
   );
 };
