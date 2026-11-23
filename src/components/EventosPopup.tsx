@@ -248,7 +248,7 @@ const EventosPopup = ({ lugar, color, onClose }: EventosPopupProps) => {
                     )}
 
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground font-medium pt-0.5">
-                      {evt.fecha_evento && (
+                      {evt.fecha_evento && evt.fecha_evento !== "2026-01-01" && (
                         <span>
                           🗓️ {futureInaug?.isFuture ? "Inaugura: " : "Inicio: "}
                           {formatDate(evt.fecha_evento)}
