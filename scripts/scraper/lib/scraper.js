@@ -16,16 +16,26 @@ const COMMON_HEADERS = {
   'Upgrade-Insecure-Requests': '1'
 };
 
+/** Convierte un href relativo en absoluto usando la página base. Devuelve null si no se puede. */
+function absUrl(href, base) {
+  if (!href) return null;
+  try {
+    return new URL(href, base).href;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Scraper específico por Venue
  */
 export async function scrapeVenue(config) {
-  const { venue, url_agenda, metodo, selectores } = config;
+  const { venue, url_agenda, metodo } = config;
   const results = [];
 
   const res = await fetch(url_agenda, {
-    headers: COMMON_HEADERS
+    headers: COMMON_HEADERS,
+    signal: AbortSignal.timeout(20000)
   });
 
   if (!res.ok) {
@@ -46,7 +56,7 @@ export async function scrapeVenue(config) {
             const startDate = item.startDate ? item.startDate.split('T')[0] : null;
             const endDate = item.endDate ? item.endDate.split('T')[0] : null;
             const title = item.name ? item.name.replace(/&amp;/g, '&').trim() : '';
-            const link = item.offers?.url || item.url || url_agenda;
+            const link = absUrl(item.offers?.url || item.url || url_agenda, url_agenda);
 
             if (title && startDate) {
               results.push({
@@ -57,8 +67,8 @@ export async function scrapeVenue(config) {
                 fecha_cierre: endDate,
                 hora: item.startDate?.includes('T') ? item.startDate.split('T')[1].substring(0, 5) : null,
                 fuente_url: link,
-                entrada_url: item.offers?.url || null,
-                imagen_url: item.image?.url || item.image || null,
+                entrada_url: absUrl(item.offers?.url, url_agenda),
+                imagen_url: absUrl(item.image?.url || item.image, url_agenda),
                 raw_text: rawHtml
               });
             }
@@ -71,7 +81,8 @@ export async function scrapeVenue(config) {
     return { rawHtml, events: results };
   }
 
-  // 2. Selectores CSS Cheerio específicos
+  // 2. Selectores CSS Cheerio específicos por venue.
+  // Nota: los campos "selectores" de venues.config.json NO se usan; las reglas viven acá.
   if (metodo === 'cheerio') {
     if (venue === 'Teatro Colón') {
       $('.calendar-item').each((_, elem) => {
@@ -79,8 +90,8 @@ export async function scrapeVenue(config) {
         const title = item.find('.event-content h1').text().trim();
         const diaText = item.find('.day-number').text().trim();
         const horaText = item.find('.day-hour').text().trim();
-        const ticketUrl = item.find('.buttons a').attr('href') || null;
-        const imgUrl = item.find('figure img').attr('src') || null;
+        const ticketUrl = absUrl(item.find('.buttons a').attr('href'), url_agenda);
+        const imgUrl = absUrl(item.find('figure img').attr('src'), url_agenda);
         const category = item.find('.category').text().trim();
 
         const date = parseSpanishDate(diaText);
@@ -103,15 +114,14 @@ export async function scrapeVenue(config) {
       $('h2 a[href*="/evento/"], h3 a[href*="/evento/"]').each((_, elem) => {
         const link = $(elem);
         const title = link.text().replace(/__/g, ' ').replace(/\s+/g, ' ').trim();
-        const href = link.attr('href');
-        const fullUrl = href.startsWith('http') ? href : `https://www.malba.org.ar${href}`;
+        const fullUrl = absUrl(link.attr('href'), 'https://www.malba.org.ar');
 
         if (title && fullUrl) {
           results.push({
             lugar: venue,
             titulo: title,
             descripcion: 'Exposición en MALBA',
-            fecha_evento: '2026-01-01', // Exposiciones en curso convención permanente/recurrente
+            fecha_evento: '2026-01-01', // Exposiciones en curso: convención permanente/recurrente
             fuente_url: fullUrl,
             raw_text: rawHtml
           });
@@ -122,9 +132,9 @@ export async function scrapeVenue(config) {
         const item = $(elem);
         const title = item.find('h3').first().text().replace(/\s+/g, ' ').trim();
         const dateText = item.find('.date span').text().trim();
-        const linkHref = item.find('a.see-more-button').attr('href') || '';
-        const fullUrl = linkHref.startsWith('http') ? linkHref : `http://centroculturalrecoleta.org${linkHref}`;
-        const imgUrl = item.find('picture img').attr('src') || null;
+        const base = 'https://centroculturalrecoleta.org';
+        const fullUrl = absUrl(item.find('a.see-more-button').attr('href'), base);
+        const imgUrl = absUrl(item.find('picture img').attr('src'), base);
 
         const date = parseSpanishDate(dateText); // sin fecha legible: null (va a Dudosos)
         if (title && title.length > 2) {
@@ -134,7 +144,7 @@ export async function scrapeVenue(config) {
             descripcion: dateText ? `Horario: ${dateText}` : null,
             fecha_evento: date,
             fuente_url: fullUrl || url_agenda,
-            imagen_url: imgUrl ? (imgUrl.startsWith('http') ? imgUrl : `http://centroculturalrecoleta.org${imgUrl}`) : null,
+            imagen_url: imgUrl,
             raw_text: rawHtml
           });
         }
@@ -144,7 +154,7 @@ export async function scrapeVenue(config) {
         const item = $(elem);
         const title = item.find('.nombre').text().trim();
         const info = item.find('.informacion p').text().trim();
-        const link = item.find('.show_top a').attr('href') || url_agenda;
+        const link = absUrl(item.find('.show_top a').attr('href'), url_agenda) || url_agenda;
         const categoria = item.find('.categoria').text().trim();
 
         const date = parseSpanishDate(info);
@@ -163,6 +173,7 @@ export async function scrapeVenue(config) {
     } else if (venue === 'Fundación Proa') {
       $('h1, h2, h3').each((_, elem) => {
         const title = $(elem).text().replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+        // Los títulos de menú/navegación se descartan después por esGenerico() en el validador
         if (title.length > 5 && !title.includes('Menú') && !title.includes('Contacto')) {
           results.push({
             lugar: venue,
@@ -175,29 +186,31 @@ export async function scrapeVenue(config) {
         }
       });
     } else if (venue === 'Colección Fortabat') {
-      const title = $('.featured-hero-title h2').text().trim() || 'Colección Permanente';
-      const ticketsUrl = $('a[href*="feverup.com"]').attr('href') || null;
-      results.push({
-        lugar: venue,
-        titulo: title,
-        descripcion: 'Arte argentino de los siglos XIX, XX y XXI en Colección Fortabat',
-        fecha_evento: '2026-01-01',
-        fuente_url: url_agenda,
-        entrada_url: ticketsUrl,
-        raw_text: rawHtml
-      });
+      // Sin título real en la página: no se inventa uno (antes caía en "Colección Permanente", que es genérico).
+      const title = $('.featured-hero-title h2').text().trim();
+      if (title) {
+        results.push({
+          lugar: venue,
+          titulo: title,
+          descripcion: 'Arte argentino de los siglos XIX, XX y XXI en Colección Fortabat',
+          fecha_evento: '2026-01-01',
+          fuente_url: url_agenda,
+          entrada_url: absUrl($('a[href*="feverup.com"]').attr('href'), url_agenda),
+          raw_text: rawHtml
+        });
+      }
     } else if (venue === 'Museo de Arte Moderno') {
       $('h2 a[href*="/exposiciones/"], h3 a[href*="/exposiciones/"]').each((_, elem) => {
         const link = $(elem);
         const title = link.text().replace(/\s+/g, ' ').trim();
-        const href = link.attr('href');
-        if (title && href) {
+        const fullUrl = absUrl(link.attr('href'), url_agenda);
+        if (title && fullUrl) {
           results.push({
             lugar: venue,
             titulo: title,
             descripcion: 'Exposición en el Museo de Arte Moderno de Buenos Aires',
             fecha_evento: '2026-01-01',
-            fuente_url: href,
+            fuente_url: fullUrl,
             raw_text: rawHtml
           });
         }
@@ -206,8 +219,8 @@ export async function scrapeVenue(config) {
       $('a[href*="/events/"]').each((_, elem) => {
         const item = $(elem);
         const text = item.text().replace(/\s+/g, ' ').trim();
-        const href = item.attr('href');
-        const fullUrl = href.startsWith('http') ? href : `https://tickets.artlabpro.net${href}`;
+        const fullUrl = absUrl(item.attr('href'), 'https://tickets.artlabpro.net');
+        if (!fullUrl) return;
 
         // Extraer precio si existe
         const precioMatch = text.match(/Desde AR\$\s*[\d\.]+/i);
@@ -252,11 +265,14 @@ export async function scrapeVenue(config) {
             titulo: title,
             descripcion: 'Actividad en Museo Nacional de Bellas Artes',
             fecha_evento: '2026-01-01',
-            fuente_url: href.startsWith('http') ? href : `https://www.bellasartes.gob.ar${href}`,
+            fuente_url: absUrl(href, 'https://www.bellasartes.gob.ar'),
             raw_text: rawHtml
           });
         }
       });
+    } else {
+      // Antes este caso devolvía 0 eventos sin avisar.
+      console.warn(`⚠️ [SCRAPER] ${venue}: no hay rama de scraping para este venue en scraper.js. Revisar.`);
     }
 
     return { rawHtml, events: results };
