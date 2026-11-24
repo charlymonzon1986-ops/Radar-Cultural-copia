@@ -13,13 +13,15 @@ const MAX_BATCH = 200;
 const GH_REPO = process.env.GITHUB_REPO || 'charlymonzon1986-ops/Radar-Cultural-copia';
 const GH_TOKEN = (process.env.GH_TOKEN_ACTIONS || '').trim();
 const VENCE_MIN = 24 * 60; // las acciones pendientes de confirmación vencen a las 24 h
+const TG_TIMEOUT_MS = 10000; // una llamada colgada no puede frenar el webhook
 
 // ---------- Telegram ----------
 async function tg(method, body = {}) {
   const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(TG_TIMEOUT_MS)
   });
   const data = await res.json();
   if (!data.ok) throw new Error(`${method}: ${data.description || res.status}`);
@@ -36,8 +38,12 @@ export function send(text, teclado) {
   });
 }
 
-function answer(callbackId, text = '', alert = false) {
-  return tg('answerCallbackQuery', { callback_query_id: callbackId, text, show_alert: alert });
+/**
+ * Responde al clic del botón. Si Telegram ya no acepta la respuesta (query vencida o ya contestada),
+ * no pasa nada: el resultado se muestra igual con un mensaje.
+ */
+function answer(callbackId) {
+  return tg('answerCallbackQuery', { callback_query_id: callbackId }).catch(() => null);
 }
 
 async function markMessage(message, label) {
@@ -56,10 +62,6 @@ function esVencido(ev) {
   if (ev.fecha_evento === '2026-01-01') return false; // recurrentes nunca vencen
   const ref = ev.fecha_cierre || ev.fecha_evento;
   return !!ref && ref < hoy();
-}
-
-function escLike(s) {
-  return s.replace(/[%_\\]/g, c => `\\${c}`);
 }
 
 async function buscarEventos(supabase, texto, { estado } = {}) {
@@ -148,7 +150,8 @@ async function dispararReel(eventoId, credito = '') {
       'X-GitHub-Api-Version': '2022-11-28',
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ ref: 'main', inputs: { evento_id: String(eventoId), credito: credito || '' } })
+    body: JSON.stringify({ ref: 'main', inputs: { evento_id: String(eventoId), credito: credito || '' } }),
+    signal: AbortSignal.timeout(TG_TIMEOUT_MS)
   });
   if (res.status !== 204) throw new Error(`GitHub respondió ${res.status} al pedir el render.`);
   return send('🎬 Reel en marcha. Te lo mando al chat cuando esté listo (suele tardar 3 a 6 minutos).');
@@ -204,7 +207,7 @@ async function listarVencidos(supabase) {
 async function listarPendientes(supabase) {
   const { data, error } = await supabase
     .from('eventos')
-    .select('id, titulo, lugar, fecha_evento, fecha_cierre, hora, precio, estado, entrada_url')
+    .select('id, titulo, lugar, fecha_evento, fecha_cierre, hora, precio, estado, entrada_url, imagen_url')
     .eq('estado', 'pendiente')
     .order('fecha_evento')
     .limit(10);
@@ -305,7 +308,10 @@ async function mostrarCamposEditables(ev) {
 
 // ---------- Clics en botones ----------
 async function handleCallback(supabase, q) {
-  if (String(q.message?.chat?.id) !== CHAT_ID) return answer(q.id, 'No autorizado', true);
+  // Se responde PRIMERO: así Telegram deja de mostrar el botón "cargando" aunque lo siguiente tarde.
+  await answer(q.id);
+
+  if (String(q.message?.chat?.id) !== CHAT_ID) return;
   const partes = (q.data || '').split(':');
   const accion = partes[0];
 
@@ -314,16 +320,11 @@ async function handleCallback(supabase, q) {
     case 'reject': {
       const nuevo = accion === 'approve' ? 'aprobado' : 'rechazado';
       const ok = await cambiarEstado(supabase, partes[1], nuevo);
-      if (!ok) {
-        await answer(q.id, 'Ya fue procesado o no existe.', true);
-        return markMessage(q.message, '⚠️ YA PROCESADO');
-      }
-      await answer(q.id, `${nuevo} ✔`);
+      if (!ok) return markMessage(q.message, '⚠️ YA PROCESADO');
       return markMessage(q.message, `${accion === 'approve' ? '✅' : '❌'} ${nuevo.toUpperCase()}`);
     }
 
     case 'del': {
-      await answer(q.id);
       const { data } = await supabase.from('eventos').select('id, titulo, lugar').eq('id', partes[1]).maybeSingle();
       if (!data) return send('Ese evento ya no existe.');
       return pedirConfirmacionBorrado(supabase, [data.id], `${data.titulo} (${data.lugar})`);
@@ -331,27 +332,21 @@ async function handleCallback(supabase, q) {
 
     case 'cdel': {
       const acc = await getAccion(supabase, partes[1], 'borrar');
-      if (!acc) { await answer(q.id, 'Esta confirmación ya no es válida.', true); return; }
+      if (!acc) return send('⚠️ Esta confirmación ya no es válida (venció o ya se usó).');
       await cerrarAccion(supabase, acc.id, 'ejecutada'); // se cierra antes para evitar doble borrado
       const ids = acc.payload.ids;
       const { data, error } = await supabase.from('eventos').delete().in('id', ids).select('id');
-      if (error) {
-        await answer(q.id, 'Error al borrar', true);
-        return send(`❌ Error al borrar: ${esc(error.message)}`);
-      }
-      await answer(q.id, `🗑 ${data.length} borrado(s).`);
+      if (error) return send(`❌ Error al borrar: ${esc(error.message)}`);
       return markMessage(q.message, `🗑 ${data.length} BORRADO(S)`);
     }
 
     case 'cancel': {
       const acc = await getAccion(supabase, partes[1]);
       if (acc) await cerrarAccion(supabase, acc.id, 'cancelada');
-      await answer(q.id, 'Cancelado.');
       return markMessage(q.message, '↩️ CANCELADO');
     }
 
     case 'mod': {
-      await answer(q.id);
       const { data } = await supabase.from('eventos').select('id, titulo').eq('id', partes[1]).maybeSingle();
       if (!data) return send('Ese evento ya no existe.');
       return mostrarCamposEditables(data);
@@ -359,8 +354,7 @@ async function handleCallback(supabase, q) {
 
     case 'campo': {
       const [, eventoId, campo] = partes;
-      if (!CAMPOS_EDITABLES[campo]) { await answer(q.id, 'Campo no editable', true); return; }
-      await answer(q.id);
+      if (!CAMPOS_EDITABLES[campo]) return send('⚠️ Ese campo no es editable.');
       await crearAccion(supabase, 'valor', { evento_id: eventoId, campo });
       const label = CAMPOS_EDITABLES[campo].label;
       const ayuda = { hora: 'HH:MM', fecha_evento: 'AAAA-MM-DD', fecha_cierre: 'AAAA-MM-DD o null', entrada_url: 'https://… o null' }[campo] || 'el nuevo texto';
@@ -368,7 +362,6 @@ async function handleCallback(supabase, q) {
     }
 
     case 'menu': {
-      await answer(q.id);
       if (partes[1] === 'estado') return resumenEstado(supabase);
       if (partes[1] === 'pendientes') return listarPendientes(supabase);
       if (partes[1] === 'vencidos') return listarVencidos(supabase);
@@ -376,7 +369,6 @@ async function handleCallback(supabase, q) {
     }
 
     case 'reel': {
-      await answer(q.id);
       const { data } = await supabase.from('eventos').select('id, estado, imagen_url').eq('id', partes[1]).maybeSingle();
       if (!data || data.estado !== 'aprobado' || !data.imagen_url) return send('Ese evento ya no es válido para un reel (tiene que estar aprobado y con imagen).');
       return dispararReel(data.id, '');
@@ -384,7 +376,7 @@ async function handleCallback(supabase, q) {
 
     case 'done':
     default:
-      return answer(q.id);
+      return;
   }
 }
 
