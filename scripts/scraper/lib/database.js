@@ -76,7 +76,7 @@ export async function syncEventsWithSupabase(supabase, validEvents, options = {}
     const esProximo = calculateEsProximo(ev.fecha_evento);
 
     if (!existing) {
-      // Evento nuevo -> entra con estado 'pendiente'
+      // Evento nuevo -> entra con estado 'pendiente' y lo aprueba un humano desde el bot
       // ⚠️ REGLA CRÍTICA: NO TOCAR instagram_url (se deja undefined / null)
       toInsert.push({
         lugar: ev.lugar,
@@ -90,7 +90,7 @@ export async function syncEventsWithSupabase(supabase, validEvents, options = {}
         tipo_evento: ev.tipo_evento || null,
         fuente_url: ev.fuente_url,
         imagen_url: ev.imagen_url || null,
-        estado: 'aprobado',
+        estado: 'pendiente',
         es_proximo: esProximo
       });
     } else {
