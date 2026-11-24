@@ -7,6 +7,7 @@ import { validateEvent } from './lib/validator.js';
 import { getSupabaseClient, getVenuesSet, syncEventsWithSupabase } from './lib/database.js';
 import { sendDailyReport } from './lib/telegram.js';
 import { obtenerEventosGCBA } from './lib/sources/gcba.js';
+import { pedirConfirmacionBorrado } from './lib/bot-core.js';
 
 dotenv.config();
 
@@ -137,11 +138,25 @@ async function run() {
   }
 
   console.log(`\n📊 Resumen de sincronización:`);
-  console.log(`   - Nuevos a insertar (estado='aprobado'): ${syncResult.toInsert.length}`);
+  console.log(`   - Nuevos a insertar (estado='pendiente'): ${syncResult.toInsert.length}`);
   console.log(`   - Modificados a actualizar: ${syncResult.toUpdate.length}`);
   console.log(`   - Eliminados por vencimiento: ${syncResult.toDelete.length}`);
   if (syncResult.deleteBlockedByCircuitBreaker) {
     console.log(`   🚨 CIRCUIT BREAKER ACTIVADO: Más de 20 eventos para eliminar. Borrado cancelado.`);
+
+    // Antes solo se logueaba y el borrado quedaba pendiente sin que nadie se enterara.
+    // Ahora se pide confirmación por Telegram con los mismos botones que usa el bot.
+    if (supabase && !isDryRun) {
+      try {
+        const ids = syncResult.toDelete.map(e => e.id);
+        const lista = syncResult.toDelete.slice(0, 10).map(e => `• ${e.titulo} (${e.lugar})`).join('\n');
+        const extra = ids.length > 10 ? `\n…y ${ids.length - 10} más` : '';
+        await pedirConfirmacionBorrado(supabase, ids, `${lista}${extra}`);
+        console.log(`   📨 Pedido de confirmación enviado por Telegram (${ids.length} eventos).`);
+      } catch (confErr) {
+        console.error(`   ❌ No se pudo pedir la confirmación por Telegram: ${confErr.message}`);
+      }
+    }
   }
 
   // 6. Enviar reporte por Telegram
