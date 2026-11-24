@@ -1,11 +1,14 @@
 /**
  * Capa 1: datos abiertos del GCBA (Buenos Aires Data, CKAN).
- * Resuelve la URL real del recurso con package_show. Solo devuelve eventos de venues del catálogo.
+ * Resuelve la URL real del recurso con package_show. Solo devuelve eventos de venues del catálogo,
+ * con título concreto (no genérico), fecha válida, no vencidos y con fuente_url absoluta.
  */
 import { parseSpanishDate, normalizeHora } from '../fechas.js';
 import { parseICS } from '../ics.js';
+import { esGenerico } from '../genericos.js';
 
 const CKAN = 'https://data.buenosaires.gob.ar/api/3/action/package_show?id=';
+const PORTAL = 'https://data.buenosaires.gob.ar/dataset/';
 const UA = { 'User-Agent': 'RadarCulturalBot/1.0 (agenda cultural; contacto: datosabiertos)' };
 
 export const FUENTES_GCBA = [
@@ -80,8 +83,11 @@ function columnas(cabecera) {
   return Object.fromEntries(Object.entries(SINONIMOS).map(([k, v]) => [k, buscar(v)]));
 }
 
+/** Link de respaldo: si el dataset no trae URL del evento, apuntamos a la ficha del dataset (siempre absoluta). */
+const fallbackUrl = (dataset) => `${PORTAL}${dataset}`;
+
 /** CSV -> eventos normalizados. Lanza error si no reconoce título o fecha. */
-export function csvToEventos(texto, { lugarFijo = null } = {}) {
+export function csvToEventos(texto, { lugarFijo = null, dataset = '' } = {}) {
   const filas = parseCSV(texto);
   if (filas.length < 2) throw new Error('CSV vacío');
   const col = columnas(filas[0]);
@@ -96,6 +102,7 @@ export function csvToEventos(texto, { lugarFijo = null } = {}) {
     const fecha = parseSpanishDate(get(col.fecha));
     if (!titulo || !fecha) continue;
 
+    const link = get(col.link);
     eventos.push({
       titulo,
       lugar: lugarFijo || mapLugar(get(col.lugar)),
@@ -103,7 +110,7 @@ export function csvToEventos(texto, { lugarFijo = null } = {}) {
       fecha_evento: fecha,
       fecha_cierre: parseSpanishDate(get(col.fecha_fin)),
       hora: normalizeHora(get(col.hora)),
-      fuente_url: get(col.link) || null,
+      fuente_url: /^https?:\/\//i.test(link) ? link : (dataset ? fallbackUrl(dataset) : null),
       entrada_url: null,
       imagen_url: null,
       precio: null
@@ -112,13 +119,14 @@ export function csvToEventos(texto, { lugarFijo = null } = {}) {
   return eventos;
 }
 
-export function icsToEventos(texto, { lugarFijo = null } = {}) {
+export function icsToEventos(texto, { lugarFijo = null, dataset = '' } = {}) {
   return parseICS(texto)
     .filter((e) => e.titulo && e.fecha_evento)
     .filter((e) => e.lugar || lugarFijo)
     .map((e) => ({
       ...e,
       lugar: mapLugar(e.lugar) || lugarFijo,
+      fuente_url: /^https?:\/\//i.test(e.fuente_url || '') ? e.fuente_url : (dataset ? fallbackUrl(dataset) : null),
       imagen_url: null,
       entrada_url: null,
       precio: null
@@ -127,7 +135,8 @@ export function icsToEventos(texto, { lugarFijo = null } = {}) {
 
 /**
  * FILTRO OBLIGATORIO: solo se quedan eventos cuyo lugar existe en el catálogo (validVenuesSet),
- * con título, fecha válida y no vencidos. Puro: no hace red ni escribe en la base.
+ * con título concreto (regla de genéricos), fecha válida, fuente_url absoluta y no vencidos.
+ * Puro: no hace red ni escribe en la base.
  */
 export function filtrarPorCatalogo(eventos, validVenuesSet, hoy) {
   const aceptados = [];
@@ -135,6 +144,8 @@ export function filtrarPorCatalogo(eventos, validVenuesSet, hoy) {
   for (const ev of eventos) {
     if (!ev.lugar || !validVenuesSet.has(ev.lugar)) { descartados++; continue; }
     if (!ev.titulo || !ev.fecha_evento) { descartados++; continue; }
+    if (esGenerico(ev.titulo, ev.lugar)) { descartados++; continue; }
+    if (!ev.fuente_url) { descartados++; continue; }
     const permanente = ev.fecha_evento === '2026-01-01';
     const ref = ev.fecha_cierre || ev.fecha_evento;
     if (!permanente && ref < hoy) { descartados++; continue; }
@@ -143,17 +154,14 @@ export function filtrarPorCatalogo(eventos, validVenuesSet, hoy) {
   return { aceptados, descartados };
 }
 
-// Texto seguro para Telegram (sin <, > ni &, y corto)
-const seguro = (t) => String(t || '').replace(/[<>&]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
-
 /** Resuelve las URLs de TODOS los recursos del formato pedido desde CKAN. */
 export async function recursosUrls(dataset, formato) {
   const res = await fetch(CKAN + encodeURIComponent(dataset), { headers: UA, signal: AbortSignal.timeout(20000) });
   const tipo = res.headers.get('content-type') || '';
-  if (!res.ok) throw new Error(`CKAN ${dataset}: HTTP ${res.status} (${seguro(tipo)})`);
+  if (!res.ok) throw new Error(`CKAN ${dataset}: HTTP ${res.status} (${tipo.slice(0, 60)})`);
   const cuerpo = await res.text();
   if (!cuerpo.trim().startsWith('{')) {
-    throw new Error(`CKAN ${dataset}: respuesta no JSON (${seguro(tipo)}): ${seguro(cuerpo)}`);
+    throw new Error(`CKAN ${dataset}: respuesta no JSON (${tipo.slice(0, 60)})`);
   }
   const json = JSON.parse(cuerpo);
   if (!json.success) throw new Error(`CKAN ${dataset}: respuesta sin éxito`);
@@ -174,14 +182,14 @@ async function descargar(url) {
 async function leerFuente(fuente) {
   if (fuente.tipo === 'csv') {
     const [url] = await recursosUrls(fuente.dataset, fuente.formatos[0]);
-    return csvToEventos(await descargar(url), { lugarFijo: fuente.lugarFijo });
+    return csvToEventos(await descargar(url), { lugarFijo: fuente.lugarFijo, dataset: fuente.dataset });
   }
   const urls = await recursosUrls(fuente.dataset, fuente.formatos[0]);
   const eventos = [];
   let fallidos = 0;
   for (const url of urls) {
     try {
-      eventos.push(...icsToEventos(await descargar(url), { lugarFijo: fuente.lugarFijo }));
+      eventos.push(...icsToEventos(await descargar(url), { lugarFijo: fuente.lugarFijo, dataset: fuente.dataset }));
     } catch {
       fallidos++;
     }
