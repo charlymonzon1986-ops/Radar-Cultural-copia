@@ -1,6 +1,7 @@
 /**
- * Bot de Radar Cultural (Telegram). Corre cada pocos minutos desde GitHub Actions:
- * lee los mensajes y clics pendientes, ejecuta la acción y termina.
+ * Lógica del bot de Radar Cultural (Telegram).
+ * Se ejecuta como webhook desde api/telegram.js: Telegram llama en cada mensaje o clic de botón.
+ * También exporta pedirConfirmacionBorrado para que el scraper pida confirmación del circuit breaker.
  */
 import { createClient } from '@supabase/supabase-js';
 import { parseIntent, validateField, CAMPOS_EDITABLES, normalize, esc, extraerCredito } from './intents.js';
@@ -152,7 +153,8 @@ async function dispararReel(eventoId, credito = '') {
   if (res.status !== 204) throw new Error(`GitHub respondió ${res.status} al pedir el render.`);
   return send('🎬 Reel en marcha. Te lo mando al chat cuando esté listo (suele tardar 3 a 6 minutos).');
 }
-async function pedirConfirmacionBorrado(supabase, ids, descripcion) {
+
+export async function pedirConfirmacionBorrado(supabase, ids, descripcion) {
   if (ids.length === 0) return send('No hay eventos para borrar.');
   if (ids.length > MAX_BATCH) return send(`Son ${ids.length} eventos. El límite por confirmación es ${MAX_BATCH}; hay que hacerlo en partes.`);
   const accId = await crearAccion(supabase, 'borrar', { ids });
@@ -392,4 +394,3 @@ export async function procesarUpdate(update) {
   if (update.callback_query) return handleCallback(supabase, update.callback_query);
   if (update.message) return handleMessage(supabase, update.message);
 }
-
