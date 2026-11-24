@@ -43,142 +43,13 @@ const CATEGORIES: CategoryFilter[] = [
   { id: "Performance", label: "Performance", icon: "🎪" },
 ];
 
-const INITIAL_AGENDA: AgendaEvent[] = [
-  {
-    id: "ag-1",
-    titulo: "Lobgesang (Mendelssohn) – Orquesta Académica del Teatro Colón",
-    lugar: "Teatro Colón",
-    tipo: "Concierto",
-    fecha: "2026-09-05",
-    fechaFormatted: "Sábado 5 sep (17:00 hs)",
-    isToday: false,
-    precioTipo: "con_entrada",
-    precioTexto: "Desde $6.000",
-    iconEmoji: "🎻",
-  },
-  {
-    id: "ag-2",
-    titulo: "Homenaje a Jorge Luis Borges: 40 Años",
-    lugar: "Palacio Libertad (CCK)",
-    tipo: "Exposición",
-    fecha: "2026-09-05",
-    fechaFormatted: "Sábado 5 sep",
-    isToday: false,
-    precioTipo: "gratis",
-    precioTexto: "Entrada Gratuita",
-    iconEmoji: "📚",
-  },
-  {
-    id: "ag-3",
-    titulo: "Show Inmersivo 360°: Luces del Universo",
-    lugar: "Planetario Galileo Galilei",
-    tipo: "Exposición",
-    fecha: "2026-09-06",
-    fechaFormatted: "Domingo 6 sep",
-    precioTipo: "con_entrada",
-    precioTexto: "$3.000 general",
-    iconEmoji: "🌌",
-  },
-  {
-    id: "ag-4",
-    titulo: "Thomas Demand: El tartamudeo de la historia",
-    lugar: "Fundación Proa",
-    tipo: "Exposición",
-    fecha: "2026-09-06",
-    fechaFormatted: "Domingo 6 sep",
-    precioTipo: "con_entrada",
-    precioTexto: "$5.000 general",
-    iconEmoji: "📷",
-  },
-  {
-    id: "ag-5",
-    titulo: "FIBA 2026 — Festival Internacional de Buenos Aires (Apertura)",
-    lugar: "Teatro Colón",
-    tipo: "Teatro/Danza",
-    fecha: "2026-09-09",
-    fechaFormatted: "Miércoles 9 sep",
-    precioTipo: "gratis",
-    precioTexto: "Entrada Libre con reserva previa",
-    iconEmoji: "🎭",
-  },
-  {
-    id: "ag-6",
-    titulo: "Premio Andreani de Arte, Ciencia y Tecnología",
-    lugar: "Fundación Andreani",
-    tipo: "Inauguración",
-    fecha: "2026-09-10",
-    fechaFormatted: "Jueves 10 sep",
-    precioTipo: "gratis",
-    precioTexto: "Entrada Gratuita",
-    iconEmoji: "🤖",
-  },
-  {
-    id: "ag-7",
-    titulo: "La ópera de tres centavos — Kurt Weill / Bertolt Brecht",
-    lugar: "Teatro Colón",
-    tipo: "Teatro/Danza",
-    fecha: "2026-09-11",
-    fechaFormatted: "Viernes 11 sep (20:00 hs)",
-    precioTipo: "con_entrada",
-    precioTexto: "Desde $10.000",
-    iconEmoji: "🎭",
-  },
-  {
-    id: "ag-8",
-    titulo: "La Bomba de Tiempo — Percusión en Vivo",
-    lugar: "Ciudad Cultural Konex",
-    tipo: "Música",
-    fecha: "2026-09-12",
-    fechaFormatted: "Sábado 12 sep",
-    precioTipo: "con_entrada",
-    precioTexto: "$9.000 general",
-    iconEmoji: "🥁",
-  },
-  {
-    id: "ag-9",
-    titulo: "Visitas Guiadas Nocturnas & Faro Iluminado",
-    lugar: "Palacio Barolo",
-    tipo: "Recorrido nocturno",
-    fecha: "2026-09-13",
-    fechaFormatted: "Domingo 13 sep",
-    precioTipo: "con_entrada",
-    precioTexto: "$14.000 general",
-    iconEmoji: "🏛️",
-  },
-  {
-    id: "ag-10",
-    titulo: "Federico Klemm: Iluminador de mitos",
-    lugar: "Centro Cultural Recoleta",
-    tipo: "Exposición",
-    fecha: "2026-09-16",
-    fechaFormatted: "Miércoles 16 sep",
-    precioTipo: "gratis",
-    precioTexto: "Entrada Gratuita",
-    iconEmoji: "🎨",
-  },
-  {
-    id: "ag-11",
-    titulo: "Viva Frida: Exposición de Frida Kahlo",
-    lugar: "MALBA",
-    tipo: "Inauguración",
-    fecha: "2026-09-19",
-    fechaFormatted: "Sábado 19 sep (19:00 hs)",
-    precioTipo: "gratis",
-    precioTexto: "Entrada Libre y Gratuita en inauguración",
-    iconEmoji: "💖",
-  },
-  {
-    id: "ag-12",
-    titulo: "Ballet Estable: El Lago de los Cisnes (Últimas funciones)",
-    lugar: "Teatro Colón",
-    tipo: "Teatro/Danza",
-    fecha: "2026-09-28",
-    fechaFormatted: "Lunes 28 sep",
-    precioTipo: "con_entrada",
-    precioTexto: "Desde $12.000",
-    iconEmoji: "🩰",
-  },
-];
+// La agenda muestra SOLO eventos reales de la base (aprobados, con fecha válida, próximos 30 días).
+// Antes había una lista fija de eventos de septiembre 2026 que se seguía mostrando vencida.
+const DIAS_VENTANA = 30;
+const FECHA_PERMANENTE = "2026-01-01";
+
+const isoDate = (d: Date) => d.toISOString().slice(0, 10);
+const esFechaValida = (f: unknown): f is string => typeof f === "string" && /^\d{4}-\d{2}-\d{2}$/.test(f);
 
 interface AgendaCulturalModalProps {
   onClose: () => void;
@@ -191,89 +62,80 @@ export const AgendaCulturalModal = ({
 }: AgendaCulturalModalProps) => {
   const [selectedFilter, setSelectedFilter] = useState("Todos");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [events, setEvents] = useState<AgendaEvent[]>(INITIAL_AGENDA);
+  const [events, setEvents] = useState<AgendaEvent[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const loadEvents = async () => {
       try {
         setLoading(true);
-        let fetchedEvents: any[] = [];
-        try {
-          const { data } = await supabase.from("eventos").select("*");
-          if (data) {
-            fetchedEvents = data.filter((e) => !e.estado || e.estado === "aprobado");
-          }
-        } catch {
-          fetchedEvents = [];
-        }
 
-        const merged: AgendaEvent[] = [...INITIAL_AGENDA];
+        const hoyDate = new Date();
+        hoyDate.setHours(0, 0, 0, 0);
+        const hoyIso = isoDate(hoyDate);
+        const limite = new Date(hoyDate);
+        limite.setDate(limite.getDate() + DIAS_VENTANA);
+        const limiteIso = isoDate(limite);
 
-        if (fetchedEvents && fetchedEvents.length > 0) {
-          fetchedEvents.forEach((item, index) => {
-            const titleLower = (item.titulo || "").toLowerCase();
-            const alreadyExists = merged.some((m) => {
-              const mLower = m.titulo.toLowerCase();
-              return mLower === titleLower || (mLower.length > 5 && titleLower.length > 5 && (mLower.includes(titleLower) || titleLower.includes(mLower)));
-            });
+        const { data, error } = await supabase
+          .from("eventos")
+          .select("*")
+          .eq("estado", "aprobado");
+        if (error) throw error;
 
-            if (!alreadyExists) {
-              const rawDate = item.fecha_evento || (item.fecha_inicio ? item.fecha_inicio.split("T")[0] : "2026-09-15");
-              let formattedDate = rawDate;
-              let isToday = false;
+        const fetchedEvents = (data || []).filter(
+          (e) =>
+            esFechaValida(e.fecha_evento) &&
+            e.fecha_evento !== FECHA_PERMANENTE &&
+            e.fecha_evento >= hoyIso &&
+            e.fecha_evento <= limiteIso
+        );
 
-              try {
-                const dateObj = new Date(rawDate + "T00:00:00");
-                if (!isNaN(dateObj.getTime())) {
-                  const now = new Date();
-                  now.setHours(0, 0, 0, 0);
-                  const compareDate = new Date(dateObj);
-                  compareDate.setHours(0, 0, 0, 0);
-                  isToday = compareDate.getTime() === now.getTime();
+        const merged: AgendaEvent[] = fetchedEvents.map((item, index) => {
+          const rawDate: string = item.fecha_evento;
+          const dateObj = new Date(rawDate + "T00:00:00");
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+          const isToday = dateObj.getTime() === now.getTime();
 
-                  const weekday = dateObj.toLocaleDateString("es-AR", { weekday: "long" });
-                  const month = dateObj.toLocaleDateString("es-AR", { month: "short" }).replace(".", "");
-                  const dayNum = dateObj.getDate();
-                  formattedDate = `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${dayNum} ${month}${item.hora ? ` (${item.hora})` : ""}`;
-                }
-              } catch {
-                formattedDate = rawDate;
-              }
+          const weekday = dateObj.toLocaleDateString("es-AR", { weekday: "long" });
+          const month = dateObj.toLocaleDateString("es-AR", { month: "short" }).replace(".", "");
+          const dayNum = dateObj.getDate();
+          const formattedDate = `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${dayNum} ${month}${item.hora ? ` (${item.hora})` : ""}`;
 
-              const isGratis = !item.precio || item.precio.toLowerCase().includes("gratis") || item.precio.toLowerCase().includes("gratuita");
+          const precio: string = item.precio || "";
+          const isGratis = !precio || precio.toLowerCase().includes("gratis") || precio.toLowerCase().includes("gratuita");
 
-              let emoji = "📌";
-              const t = item.titulo?.toLowerCase() || "";
-              if (t.includes("concierto") || t.includes("filarmónica") || t.includes("orquesta")) emoji = "🎻";
-              else if (t.includes("retrospectiva") || t.includes("arte") || t.includes("muestra") || t.includes("exposición")) emoji = "🎨";
-              else if (t.includes("jazz") || t.includes("blues")) emoji = "🎷";
-              else if (t.includes("teatro") || t.includes("ópera") || t.includes("danza") || t.includes("ballet")) emoji = "🎭";
-              else if (t.includes("libro") || t.includes("borges") || t.includes("lectura")) emoji = "📚";
-              else if (t.includes("planetario") || t.includes("universo") || t.includes("estrellas")) emoji = "🌌";
-              else if (t.includes("foto") || t.includes("fotografía")) emoji = "📷";
+          let emoji = "📌";
+          const t = item.titulo?.toLowerCase() || "";
+          if (t.includes("concierto") || t.includes("filarmónica") || t.includes("orquesta")) emoji = "🎻";
+          else if (t.includes("retrospectiva") || t.includes("arte") || t.includes("muestra") || t.includes("exposición")) emoji = "🎨";
+          else if (t.includes("jazz") || t.includes("blues")) emoji = "🎷";
+          else if (t.includes("teatro") || t.includes("ópera") || t.includes("danza") || t.includes("ballet")) emoji = "🎭";
+          else if (t.includes("libro") || t.includes("borges") || t.includes("lectura")) emoji = "📚";
+          else if (t.includes("planetario") || t.includes("universo") || t.includes("estrellas")) emoji = "🌌";
+          else if (t.includes("foto") || t.includes("fotografía")) emoji = "📷";
 
-              merged.push({
-                id: item.id || `sp-${index}`,
-                titulo: item.titulo || "Evento Cultural",
-                lugar: item.lugar || item.nombre_lugar || "Espacio Cultural",
-                tipo: item.tipo || (emoji === "🎻" ? "Concierto" : emoji === "🎨" ? "Exposición" : "Teatro/Danza"),
-                fecha: rawDate,
-                fechaFormatted: formattedDate,
-                isToday,
-                precioTipo: isGratis ? "gratis" : "con_entrada",
-                precioTexto: item.precio || (isGratis ? "Gratis" : "Con entrada"),
-                iconEmoji: emoji,
-                fuenteUrl: item.fuente_url,
-                instagramUrl: item.instagram_url,
-              });
-            }
-          });
-        }
+          return {
+            id: item.id || `sp-${index}`,
+            titulo: item.titulo || "Evento",
+            lugar: item.lugar || "Espacio Cultural",
+            tipo: item.tipo || (emoji === "🎻" ? "Concierto" : emoji === "🎨" ? "Exposición" : "Teatro/Danza"),
+            fecha: rawDate,
+            fechaFormatted: formattedDate,
+            isToday,
+            precioTipo: isGratis ? "gratis" : "con_entrada",
+            precioTexto: precio || (isGratis ? "Gratis" : "Con entrada"),
+            iconEmoji: emoji,
+            fuenteUrl: item.fuente_url,
+            instagramUrl: item.instagram_url,
+          };
+        });
 
+        merged.sort((a, b) => a.fecha.localeCompare(b.fecha));
         setEvents(merged);
       } catch {
-        setEvents(INITIAL_AGENDA);
+        setEvents([]);
       } finally {
         setLoading(false);
       }
