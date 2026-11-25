@@ -2,6 +2,8 @@
  * Capa 1: datos abiertos del GCBA (Buenos Aires Data, CKAN).
  * Resuelve la URL real del recurso con package_show. Solo devuelve eventos de venues del catálogo,
  * con título concreto (no genérico), fecha válida, no vencidos y con fuente_url absoluta.
+ *
+ * Fuentes activas: solo las que tienen fecha por evento. Ver nota en FUENTES_GCBA.
  */
 import { parseSpanishDate, normalizeHora } from '../fechas.js';
 import { parseICS } from '../ics.js';
@@ -11,15 +13,19 @@ const CKAN = 'https://data.buenosaires.gob.ar/api/3/action/package_show?id=';
 const PORTAL = 'https://data.buenosaires.gob.ar/dataset/';
 const UA = { 'User-Agent': 'RadarCulturalBot/1.0 (agenda cultural; contacto: datosabiertos)' };
 
+/**
+ * Nota (log 2026-11-25): se quitaron dos datasets que no sirven para agenda:
+ * - "actividades-culturales": no tiene columna de fecha por actividad.
+ * - "complejo-teatral": trae año y mes, pero no día ni título de evento.
+ * Volver a sumarlos solo si el dataset publica fecha por evento.
+ */
 export const FUENTES_GCBA = [
-  { nombre: 'Teatro Colón (programación)', dataset: 'teatro-colon-programacion-actual', formatos: ['ICS'], tipo: 'ics', lugarFijo: 'Teatro Colón' },
-  { nombre: 'Actividades Culturales (Min. Cultura)', dataset: 'actividades-culturales', formatos: ['CSV'], tipo: 'csv' },
-  { nombre: 'Complejo Teatral', dataset: 'complejo-teatral', formatos: ['CSV'], tipo: 'csv' }
+  { nombre: 'Teatro Colón (programación)', dataset: 'teatro-colon-programacion-actual', formatos: ['ICS'], tipo: 'ics', lugarFijo: 'Teatro Colón' }
 ];
 
 // Texto del dataset -> nombre exacto del venue en la tabla 'lugares'. Lo no reconocido se descarta.
 const MAPA_LUGARES = [
-  { patron: /teatro san martin|teatro sarmiento|teatro regio|de la ribera/, lugar: null }, // Complejo Teatral: no confundir con el CC San Martín
+  { patron: /teatro san martin|teatro sarmiento|teatro regio|de la ribera/, lugar: null }, // no confundir con el CC San Martín
   { patron: /colon/, lugar: 'Teatro Colón' },
   { patron: /recoleta/, lugar: 'Centro Cultural Recoleta' },
   { patron: /centro cultural san martin/, lugar: 'Centro Cultural San Martín' },
