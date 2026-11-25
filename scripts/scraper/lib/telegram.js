@@ -144,11 +144,25 @@ export async function sendDailyReport(botToken, chatId, report) {
 
   // Dudosos / Rechazados
   if (dudosos.length > 0) {
-    msg += `<b>Eventos Dudosos (No cargados):</b>\n`;
-    for (const d of dudosos.slice(0, 5)) {
-      msg += `• <b>${escHtml(d.titulo || 'Sin título')}</b> (${escHtml(d.lugar)}): ${d.reasons.map(escHtml).join(', ')}\n`;
+    // Agrupar rechazos por motivo: un resumen en vez de un mensaje por evento
+    const categoria = (r) => {
+      if (/Fecha ausente/.test(r)) return 'Sin fecha';
+      if (/no aparece en la fuente/.test(r)) return 'Título no aparece en la fuente';
+      if (/genérico/.test(r)) return 'Título genérico';
+      if (/responde|no es una URL|fuente_url ausente/.test(r)) return 'Fuente inválida o caída';
+      if (/finalizado|Fecha pasada|excede la ventana/.test(r)) return 'Fecha fuera de rango';
+      if (/Venue no reconocido/.test(r)) return 'Venue no reconocido';
+      return 'Otros';
+    };
+    const porMotivo = new Map();
+    for (const d of dudosos) {
+      const cats = new Set(d.reasons.map(categoria));
+      for (const c of cats) porMotivo.set(c, (porMotivo.get(c) || 0) + 1);
     }
-    if (dudosos.length > 5) msg += `<i>... y ${dudosos.length - 5} más</i>\n`;
+    msg += `<b>No cargados (${dudosos.length}):</b>\n`;
+    for (const [motivo, n] of [...porMotivo.entries()].sort((a, b) => b[1] - a[1])) {
+      msg += `• ${escHtml(motivo)}: ${n}\n`;
+    }
     msg += `\n`;
   }
 

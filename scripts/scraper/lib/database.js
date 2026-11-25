@@ -50,6 +50,40 @@ export function calculateEsProximo(fechaEvento) {
   return diffDays >= 0 && diffDays <= 7;
 }
 
+
+/** Normaliza texto para comparar: sin acentos, minúsculas, sin puntuación. */
+export function normTxt(s) {
+  return String(s || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function titulosCoinciden(a, b) {
+  const x = normTxt(a), y = normTxt(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  const [corto, largo] = x.length <= y.length ? [x, y] : [y, x];
+  return corto.length >= 8 && largo.includes(corto);
+}
+
+/**
+ * Busca si un evento candidato ya existe en la base (por lugar + título + fecha).
+ * - Fecha real (YYYY-MM-DD): coincide con un existente de misma fecha, o con uno permanente ('2026-01-01').
+ * - Fecha permanente ('2026-01-01'): coincide con cualquier existente de mismo lugar y título.
+ * El título se compara normalizado (sin acentos ni puntuación), no exacto.
+ */
+export function findExisting(ev, existingEvents) {
+  const lugar = normTxt(ev.lugar);
+  const candidatos = existingEvents.filter(
+    (e) => normTxt(e.lugar) === lugar && titulosCoinciden(e.titulo, ev.titulo)
+  );
+  if (candidatos.length === 0) return null;
+  if (ev.fecha_evento === '2026-01-01') return candidatos[0];
+  return candidatos.find(
+    (e) => e.fecha_evento === ev.fecha_evento || e.fecha_evento === '2026-01-01'
+  ) || null;
+}
+
 /**
  * Sincroniza eventos validados con Supabase
  */
@@ -72,7 +106,7 @@ export async function syncEventsWithSupabase(supabase, validEvents, options = {}
     const key = `${ev.titulo.trim().toLowerCase()}|${ev.lugar.trim().toLowerCase()}|${ev.fecha_evento || ''}`;
     processedKeys.add(key);
 
-    const existing = existingMap.get(key);
+    const existing = findExisting(ev, existingEvents);
     const esProximo = calculateEsProximo(ev.fecha_evento);
 
     if (!existing) {
