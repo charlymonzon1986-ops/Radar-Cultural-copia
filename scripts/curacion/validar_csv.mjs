@@ -137,6 +137,17 @@ function validar(ev, lugares, vistos) {
     advertencias.push('Sin fecha de cierre: completar desde la fuente antes de aprobar');
   }
 
+  // Exposición con fecha centinela y sin cierre: nunca vence, así que no se publica
+  const esExposicion = !ev.tipo_evento || ev.tipo_evento === 'exposicion';
+  if (esPermanente && !ev.fecha_cierre && esExposicion) {
+    errores.push('Exposición sin fecha de cierre verificada: no se publica (usar fecha de inicio y cierre reales)');
+  }
+
+  // Descripciones que admiten que la fecha no está verificada
+  if (/no publica fechas|no verificad|verificar en|horario no verificado/i.test(ev.descripcion || '')) {
+    advertencias.push('La descripción indica que la fecha no está verificada');
+  }
+
   if (!ev.fuente_url) {
     errores.push('Falta fuente_url');
   } else if (!esUrlAbsoluta(ev.fuente_url)) {

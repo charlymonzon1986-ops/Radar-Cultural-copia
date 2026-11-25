@@ -43,7 +43,7 @@ const CulturalMap = () => {
     const fetchPlacesWithEvents = async () => {
       try {
         const { data } = await supabase
-          .from("eventos")
+          .from("eventos_visibles")
           .select("lugar")
           .eq("estado", "aprobado");
         if (data) {

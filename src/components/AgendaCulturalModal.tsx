@@ -78,7 +78,7 @@ export const AgendaCulturalModal = ({
         const limiteIso = isoDate(limite);
 
         const { data, error } = await supabase
-          .from("eventos")
+          .from("eventos_visibles")
           .select("*")
           .eq("estado", "aprobado");
         if (error) throw error;

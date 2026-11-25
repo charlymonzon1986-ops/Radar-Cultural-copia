@@ -134,7 +134,7 @@ const MapPopup = ({ nombre, color, hasEvent, onOpenGallery, onOpenEventos }: Map
     const fetchPreview = async () => {
       try {
         const { data } = await supabase
-          .from("eventos")
+          .from("eventos_visibles")
           .select(
             "id, titulo, descripcion, fecha_evento, fecha_cierre, hora, instagram_url, entrada_url, fuente_url"
           )

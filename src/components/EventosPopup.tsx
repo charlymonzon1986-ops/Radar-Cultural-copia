@@ -127,7 +127,7 @@ const EventosPopup = ({ lugar, color, onClose }: EventosPopupProps) => {
     const fetchEventos = async () => {
       try {
         const { data } = await supabase
-          .from("eventos")
+          .from("eventos_visibles")
           .select(
             "id, titulo, descripcion, fecha_evento, hora, instagram_url, imagen_url, precio, fecha_cierre, entrada_url, fuente_url"
           )
