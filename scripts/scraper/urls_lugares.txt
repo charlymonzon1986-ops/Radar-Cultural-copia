@@ -1,0 +1,80 @@
+Museo Nacional de Bellas Artes|https://www.bellasartes.gob.ar
+Museo de Arte Moderno|https://museomoderno.org
+Museo de Arte Contemporáneo (MACBA)|https://www.macba.com.ar
+Museo Histórico Nacional|https://museohistoriconacional.cultura.gob.ar
+Museo del Cabildo|https://cabildonacional.cultura.gob.ar
+Museo Nacional de Arte Decorativo|https://museoartedecorativo.cultura.gob.ar
+Buenos Aires Museo (BAM)|https://buenosaires.gob.ar/museos/buenos-aires-museo
+Museo Evita|https://museoevita.org.ar
+Museo Casa Carlos Gardel|https://buenosaires.gob.ar/museos/museo-casa-carlos-gardel
+Museo Xul Solar|https://www.xulsolar.org.ar
+Museo de la Inmigración|https://untref.edu.ar/muntref/es/museo-de-la-inmigracion
+Palacio Libertad (CCK)|https://palaciolibertad.gob.ar
+Teatro Colón|https://teatrocolon.org.ar
+Usina del Arte|https://buenosaires.gob.ar/usinadelarte
+Centro Cultural Recoleta|http://www.centroculturalrecoleta.org
+Centro Cultural San Martín|https://elculturalsanmartin.ar
+Museo de la Cárcova|https://museodelacarcova.una.edu.ar
+Museo Malvinas|https://museomalvinas.cultura.gob.ar
+Museo del Traje|https://buenosaires.gob.ar/museo-del-traje
+Museo Mitre|https://museomitre.cultura.gob.ar
+Museo Roca|https://museoroca.cultura.gob.ar
+Museo de la Pasión Boquense|https://www.museoboquense.com
+Museo de Esculturas Luis Perlotti|https://buenosaires.gob.ar/museos/museo-de-esculturas-luis-perlotti
+Museo Histórico de Cera|https://www.museodecera.com.ar
+MALBA|https://www.malba.org.ar
+Fundación Proa|https://www.proa.org
+Colección Fortabat|https://www.coleccionfortabat.org.ar
+Ciudad Cultural Konex|https://www.cckonex.org
+Artlab|https://artlabpro.net
+Fundación Andreani|https://www.fundacionandreani.org.ar
+Museo Judío de Buenos Aires|https://museojudio.org.ar
+Museo de los Niños|https://www.museoabasto.org.ar
+Los 36 Billares|https://los36billares.com.ar
+Café Tortoni|https://www.cafetortoni.com.ar
+Confitería Las Violetas|https://www.lasvioletas.com
+Los Galgos|https://barlosgalgos.com.ar
+Café de los Angelitos|https://www.cafedelosangelitos.com
+London City|https://www.londoncity.com.ar
+El Banderín|https://www.elbanderin.com.ar
+La Biela|https://www.labiela.com
+El Gato Negro|https://www.elgatonegro.com.ar
+La Puerto Rico|https://www.lapuertoricocafe.com.ar
+Bar del Alvear|https://alvearpalace.com
+Esquina Homero Manzi|https://www.esquinahomeromanzi.com.ar
+El Querandí|https://www.querandi.com.ar
+La Giralda|https://www.lagiralda.com.ar
+Alvear Palace|https://alvearpalace.com
+El Ateneo Grand Splendid|https://www.yenny-elateneo.com
+Librería Hernández|https://www.libreriahernandez.com
+Eterna Cadencia|https://www.eternacadencia.com.ar
+Libros del Pasaje|https://www.librosdelpasaje.com.ar
+Zivals|https://www.zivals.com.ar
+La Libre|https://lalibre.com.ar
+Confitería del Molino|https://www.delmolino.gob.ar
+Palacio Barolo|https://palaciobarolotours.com.ar
+Planetario Galileo Galilei|https://planetario.buenosaires.gob.ar
+Torre Monumental|https://buenosaires.gob.ar/museos/torre-monumental
+Biblioteca Nacional|https://www.bn.gov.ar
+Casa Rosada|https://www.casarosada.gob.ar
+Teatro Nacional Cervantes|https://www.teatrocervantes.gob.ar
+Teatro Gran Rex|https://teatro-granrex.com.ar
+Teatro Maipo|https://www.maipo.com.ar
+Paseo La Plaza|https://www.paseolaplaza.com.ar
+Teatro Multitabaris|https://www.multiteatro.com.ar
+Teatro Liceo|https://www.multiteatro.com.ar
+Teatro Beckett|https://www.teatrobeckett.com
+El Camarín de las Musas|https://www.elcamarindelasmusas.com
+Timbre 4|https://www.timbre4.com
+Centro Cultural de la Cooperación|https://www.centrocultural.coop
+Centro Cultural Matienzo|https://ccmatienzo.com.ar
+Teatro Payró|https://www.teatropayro.com
+Teatro Picadero|https://www.teatropicadero.com.ar
+El Galpón de Catalinas|https://www.catalinasur.com.ar
+Abasto Social Club|https://www.abastosocialclub.com
+Teatro Ciego|https://teatrociego.org
+Thelonious Club|https://thelonious.com.ar
+Bebop Club|https://www.bebopclub.com.ar
+Virasoro Bar|https://www.virasorobar.com.ar
+Movistar Arena|https://www.movistararena.com.ar
+Stand Up Club|https://www.standupclubarg.com

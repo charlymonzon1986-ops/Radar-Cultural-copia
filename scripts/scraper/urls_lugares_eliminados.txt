@@ -1,0 +1,44 @@
+Museo Eduardo Sívori|https://buenosaires.gob.ar/museos/museo-de-artes-plasticas-eduardo-sivori
+Museo Enrique Larreta|https://buenosaires.gob.ar/museos/museo-de-arte-espanol-enrique-larreta
+Museo de Armas de la Nación|https://www.circulomilitar.org/museo-de-armas
+Museo Benito Quinquela Martín|https://buenosaires.gob.ar/museos/museo-benito-quinquela-martin
+Museo Cornelio Saavedra|https://buenosaires.gob.ar/museos/museo-historico-de-buenos-aires-cornelio-de-saavedra
+Museo de Arte Popular José Hernández|https://buenosaires.gob.ar/museos/museo-de-arte-popular-jose-hernandez
+Centro Cultural Borges|https://ccborges.org.ar
+MUNTREF|https://untref.edu.ar/muntref
+Fundación Santander|https://www.fundacionsantander.com.ar
+Museo de la Shoá|https://www.museodelashoa.org.ar
+Fundación OSDE|https://www.artefundacionosde.com.ar
+Pasaje de la Defensa|https://www.pasajedeladefensa.com
+Teatro Vorterix|https://teatrovorterix.com
+Confitería La Ideal|https://www.confiterialaideal.com
+El Federal|https://losnotables.com.ar/el-federal
+La Poesía|https://losnotables.com.ar/la-poesia
+Bar de Cao|https://losnotables.com.ar/bar-de-cao
+The Brighton|https://www.thebrighton.com.ar
+Bar Iberia|https://www.bariberia.com.ar
+Café de García|https://www.cafedegarcia.com.ar
+Café Margot|https://losnotables.com.ar/cafe-margot
+Miramar|https://rotiseriamiramar.com.ar
+Los Laureles|https://www.barloslaureles.com.ar
+Librería de Ávila|https://www.libreriadeavila.com
+Falena|https://www.falena.com.ar
+Walrus Books|https://walrusbooks.com.ar
+Céspedes Libros|https://www.cespedeslibros.com
+Fedro Libros|https://www.fedrolibros.com.ar
+Mandrágora Libros|https://www.mandragoralibros.com.ar
+Santiago Arcos|https://www.santiagoarcos.com.ar
+Cementerio de la Recoleta|https://buenosaires.gob.ar/espaciopublicoehigieneurbana/cementerios-de-la-ciudad/cementerio-de-la-recoleta
+Palacio de Aguas Corrientes|https://www.aysa.com.ar/que_hacemos/cultura/palacio_aguas_corrientes
+Teatro Ópera|https://www.teatro-opera.com.ar
+Teatro Avenida|https://www.teatroavenida.com.ar
+Teatro Lola Membrives|https://www.teatrololamembrives.com
+Teatro El Nacional|https://www.teatroelnacional.com.ar
+Teatro Metropolitan Sura|https://www.teatrometropolitan.com.ar
+Teatro Coliseo|https://www.teatrocoliseo.org.ar
+Espacio Callejón|https://www.espaciocallejon.com
+El Excéntrico de la 18|https://www.elexcentricodela18.com.ar
+Teatro del Pueblo|https://www.teatrodelpueblo.org.ar
+Roxy Live|https://www.theroxylive.com
+Xirgu Espacio UNTREF|https://xirgu.untref.edu.ar
+La Carpintería Teatro|https://www.lacarpinteriateatro.com.ar
