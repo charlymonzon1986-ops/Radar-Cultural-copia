@@ -124,6 +124,8 @@ export async function syncEventsWithSupabase(supabase, validEvents, options = {}
         tipo_evento: ev.tipo_evento || null,
         fuente_url: ev.fuente_url,
         imagen_url: ev.imagen_url || null,
+        // Centinela sin cierre = exposición sin fecha verificada (queda oculta hasta tener cierre)
+        tipo_fecha: ev.fecha_evento === '2026-01-01' && !ev.fecha_cierre ? 'sin_verificar' : 'fecha',
         estado: 'pendiente',
         es_proximo: esProximo
       });
