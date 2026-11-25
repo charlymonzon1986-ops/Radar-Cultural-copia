@@ -48,5 +48,355 @@
     "venue": "Museo Nacional de Bellas Artes",
     "url_agenda": "https://www.bellasartes.gob.ar/agenda/",
     "metodo": "cheerio"
+  },
+  {
+    "venue": "Museo de Arte Contemporáneo (MACBA)",
+    "url_agenda": "https://www.macba.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo Histórico Nacional",
+    "url_agenda": "https://museohistoriconacional.cultura.gob.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo del Cabildo",
+    "url_agenda": "https://cabildonacional.cultura.gob.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo Nacional de Arte Decorativo",
+    "url_agenda": "https://museoartedecorativo.cultura.gob.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Buenos Aires Museo (BAM)",
+    "url_agenda": "https://buenosaires.gob.ar/museos/buenos-aires-museo",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo Evita",
+    "url_agenda": "https://museoevita.org.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo Casa Carlos Gardel",
+    "url_agenda": "https://buenosaires.gob.ar/museos/museo-casa-carlos-gardel",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo Xul Solar",
+    "url_agenda": "https://www.xulsolar.org.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo de la Inmigración",
+    "url_agenda": "https://untref.edu.ar/muntref/es/museo-de-la-inmigracion",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Usina del Arte",
+    "url_agenda": "https://buenosaires.gob.ar/usinadelarte",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Centro Cultural San Martín",
+    "url_agenda": "https://elculturalsanmartin.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo de la Cárcova",
+    "url_agenda": "https://museodelacarcova.una.edu.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo Malvinas",
+    "url_agenda": "https://museomalvinas.cultura.gob.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo del Traje",
+    "url_agenda": "https://buenosaires.gob.ar/museo-del-traje",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo Mitre",
+    "url_agenda": "https://museomitre.cultura.gob.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo Roca",
+    "url_agenda": "https://museoroca.cultura.gob.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo de la Pasión Boquense",
+    "url_agenda": "https://www.museoboquense.com",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo de Esculturas Luis Perlotti",
+    "url_agenda": "https://buenosaires.gob.ar/museos/museo-de-esculturas-luis-perlotti",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo Histórico de Cera",
+    "url_agenda": "https://www.museodecera.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Fundación Andreani",
+    "url_agenda": "https://www.fundacionandreani.org.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo Judío de Buenos Aires",
+    "url_agenda": "https://museojudio.org.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Museo de los Niños",
+    "url_agenda": "https://www.museoabasto.org.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Los 36 Billares",
+    "url_agenda": "https://los36billares.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Café Tortoni",
+    "url_agenda": "https://www.cafetortoni.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Confitería Las Violetas",
+    "url_agenda": "https://www.lasvioletas.com",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Los Galgos",
+    "url_agenda": "https://barlosgalgos.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Café de los Angelitos",
+    "url_agenda": "https://www.cafedelosangelitos.com",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "London City",
+    "url_agenda": "https://www.londoncity.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "El Banderín",
+    "url_agenda": "https://www.elbanderin.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "La Biela",
+    "url_agenda": "https://www.labiela.com",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "El Gato Negro",
+    "url_agenda": "https://www.elgatonegro.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "La Puerto Rico",
+    "url_agenda": "https://www.lapuertoricocafe.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Bar del Alvear",
+    "url_agenda": "https://alvearpalace.com",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Esquina Homero Manzi",
+    "url_agenda": "https://www.esquinahomeromanzi.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "El Querandí",
+    "url_agenda": "https://www.querandi.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "La Giralda",
+    "url_agenda": "https://www.lagiralda.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Alvear Palace",
+    "url_agenda": "https://alvearpalace.com",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "El Ateneo Grand Splendid",
+    "url_agenda": "https://www.yenny-elateneo.com",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Librería Hernández",
+    "url_agenda": "https://www.libreriahernandez.com",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Eterna Cadencia",
+    "url_agenda": "https://www.eternacadencia.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Libros del Pasaje",
+    "url_agenda": "https://www.librosdelpasaje.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Zivals",
+    "url_agenda": "https://www.zivals.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "La Libre",
+    "url_agenda": "https://lalibre.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Confitería del Molino",
+    "url_agenda": "https://www.delmolino.gob.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Palacio Barolo",
+    "url_agenda": "https://palaciobarolotours.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Planetario Galileo Galilei",
+    "url_agenda": "https://planetario.buenosaires.gob.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Torre Monumental",
+    "url_agenda": "https://buenosaires.gob.ar/museos/torre-monumental",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Biblioteca Nacional",
+    "url_agenda": "https://www.bn.gov.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Casa Rosada",
+    "url_agenda": "https://www.casarosada.gob.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Teatro Nacional Cervantes",
+    "url_agenda": "https://www.teatrocervantes.gob.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Teatro Gran Rex",
+    "url_agenda": "https://teatro-granrex.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Teatro Maipo",
+    "url_agenda": "https://www.maipo.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Paseo La Plaza",
+    "url_agenda": "https://www.paseolaplaza.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Teatro Multitabaris",
+    "url_agenda": "https://www.multiteatro.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Teatro Liceo",
+    "url_agenda": "https://www.multiteatro.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Teatro Beckett",
+    "url_agenda": "https://www.teatrobeckett.com",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "El Camarín de las Musas",
+    "url_agenda": "https://www.elcamarindelasmusas.com",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Timbre 4",
+    "url_agenda": "https://www.timbre4.com",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Centro Cultural de la Cooperación",
+    "url_agenda": "https://www.centrocultural.coop",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Centro Cultural Matienzo",
+    "url_agenda": "https://ccmatienzo.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Teatro Payró",
+    "url_agenda": "https://www.teatropayro.com",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Teatro Picadero",
+    "url_agenda": "https://www.teatropicadero.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "El Galpón de Catalinas",
+    "url_agenda": "https://www.catalinasur.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Abasto Social Club",
+    "url_agenda": "https://www.abastosocialclub.com",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Teatro Ciego",
+    "url_agenda": "https://teatrociego.org",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Thelonious Club",
+    "url_agenda": "https://thelonious.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Bebop Club",
+    "url_agenda": "https://www.bebopclub.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Virasoro Bar",
+    "url_agenda": "https://www.virasorobar.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Movistar Arena",
+    "url_agenda": "https://www.movistararena.com.ar",
+    "metodo": "json-ld"
+  },
+  {
+    "venue": "Stand Up Club",
+    "url_agenda": "https://www.standupclubarg.com",
+    "metodo": "json-ld"
   }
 ]
