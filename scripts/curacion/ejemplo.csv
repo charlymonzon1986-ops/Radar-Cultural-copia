@@ -1,0 +1,11 @@
+venue,titulo,fecha_evento,fecha_cierre,hora,fuente_url,entrada_url,precio,descripcion,tipo_evento
+MALBA,"Viva Frida: Exposición de Frida Kahlo",2026-09-20,2027-03-15,,https://malba.org.ar/exposiciones-actuales/,,,Muestra,exposicion
+Museo de Esculturas Luis Perlotti,"Premio Alfredo Bigatti de Escultura, SAAP 2026",2026-11-26,,17:00,https://www.buenosaires.gob.ar/museoperlotti,,Gratis,"Incluye ""Mixturas""",exposicion
+Museo Quinquela Martín,"27° Concurso Fotográfico Gente de mi Ciudad",2026-11-28,2026-12-20,14:00,https://buenosaires.gob.ar/museoquinquelamartin/noticias,,Gratis,,exposicion
+Museo Quinquela Martín,"27° Concurso Fotográfico Gente de mi Ciudad",2026-11-28,2026-12-20,14:00,https://buenosaires.gob.ar/museoquinquelamartin/noticias,,Gratis,,exposicion
+Teatro Inexistente,"Obra de prueba",2026-12-01,2026-12-02,20:00,https://ejemplo.com/obra,,,,teatro
+Museo Xul Solar,"Muestra vieja",2026-01-10,2026-02-10,,,,,,exposicion
+Museo Xul Solar,"Muestra lejana",2028-05-01,2028-06-01,,https://www.xulsolar.org.ar/,,,,exposicion
+Centro Cultural Recoleta,"Objetivo: Birmania. Las aventuras de Raoul Walsh",2026-11-29,2026-11-29,18:00,https://buenosaires.gob.ar/descubrir/objetivo-birmania-las-aventuras-de-raoul-walsh,,,,cine
+Museo Judío de Buenos Aires,"Exposición Permanente",2026-01-01,,,https://www.mjba.org.ar/,,,,exposicion
+Museo Xul Solar,"Fecha rota",2026-13-45,,,https://www.xulsolar.org.ar/,,,,exposicion
