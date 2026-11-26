@@ -5,6 +5,13 @@ description: Mantenimiento de la base de Radar Cultural (proyecto Supabase boeur
 
 # Radar Cultural: mantenimiento de la base de datos
 
+## Dos listas de lugares distintas (leer primero)
+
+- **Pines del mapa:** `src/data/espacios.ts` (repo `Radar-Cultural-copia`). Son ~170 lugares. Si un lugar no está ahí, su pin no aparece en el mapa.
+- **Lugares válidos para eventos:** tabla `lugares` de Supabase (168 filas). Un evento solo se acepta si su `lugar` existe en esa tabla.
+
+Antes de cargar un evento, verificar que el lugar esté en **las dos**. Si falta en `espacios.ts`, el evento se guarda pero no se ve en el mapa. Si falta en `lugares`, el scraper lo descarta.
+
 ## Esquema real (verificado 2026-11-24)
 
 Tabla `eventos`:
@@ -14,7 +21,7 @@ Tabla `eventos`:
 - `hora`, `precio`, `descripcion`, `fuente_url`, `entrada_url`, `imagen_url`, `instagram_url`, `es_proximo`, `fecha_inauguracion`, `tipo_evento`.
 - Índice único sobre `(lower(btrim(titulo)), lower(btrim(lugar)), COALESCE(fecha_evento,''))`. Un insert duplicado falla.
 
-Tabla `lugares`: `nombre` (único), `lat`, `lng`, `categoria` (`PUB`, `PRIV`, `CAFE`, `LIB`, `HIST`, `TEATRO`), `categoria_label`, `instagram`. **Es la fuente de verdad de los venues.** No existe un archivo `espacios.ts` que se use para esto.
+Tabla `lugares`: `nombre` (único), `lat`, `lng`, `categoria` (`PUB`, `PRIV`, `CAFE`, `LIB`, `HIST`, `TEATRO`), `categoria_label`, `instagram`.
 
 Tablas auxiliares: `acciones_pendientes` (confirmaciones del bot de Telegram), `eventos_pendientes` (historial, sin uso activo), `fuentes_eventos`, `fotos`. La tabla `job_applications` **no es de Radar Cultural**: no tocarla.
 
@@ -22,10 +29,10 @@ Tablas auxiliares: `acciones_pendientes` (confirmaciones del bot de Telegram), `
 
 1. **Nunca modificar `instagram_url`** en ninguna tabla, aunque parezca incorrecto.
 2. **Eventos nuevos entran como `pendiente`.** Solo se pasan a `aprobado` con confirmación explícita de Juano. Nunca insertar directo como `aprobado`.
-3. **No cargar eventos genéricos.** Un título que solo describe una categoría o el nombre del venue no se carga. La regla está en `scripts/scraper/lib/genericos.js` y en `REGLAS_CONTENIDO.md` del repo.
+3. **No cargar eventos genéricos.** Un título que solo describe una categoría o el nombre del lugar no se carga. La regla está en `scripts/scraper/lib/genericos.js` y en `REGLAS_CONTENIDO.md` del repo.
 4. **Fechas siempre en formato `YYYY-MM-DD`** (o `NULL`, o `2026-01-01` para permanentes). Nunca texto como "Por confirmar" ni formato `DD/MM/YYYY`.
 5. **Antes de borrar:** mostrar las filas con `SELECT`, guardar un respaldo (JSON en `supabase/backups/` del repo) y pedir confirmación explícita. Usar `RETURNING` en cada DELETE.
-6. **Venues:** solo insertar eventos para venues que existan en `lugares`. Si no existe, avisar antes de hacer nada.
+6. **Lugares:** solo insertar eventos para lugares que existan en `lugares` **y** en `espacios.ts`. Si falta alguno, avisar antes de hacer nada.
 
 ## Diagnóstico inicial
 
@@ -69,7 +76,7 @@ VALUES ('Título concreto', 'Nombre exacto en lugares', '2026-12-05', NULL, '20:
 RETURNING id, titulo, estado;
 ```
 
-Verificar antes: el título es concreto (no genérico), la fecha es `YYYY-MM-DD`, el `lugar` existe en `lugares`, y `fuente_url` es absoluta.
+Verificar antes: el título es concreto (no genérico), la fecha es `YYYY-MM-DD`, el `lugar` existe en `lugares` y en `espacios.ts`, y `fuente_url` es absoluta.
 
 ## Flag `es_proximo`
 
@@ -89,5 +96,5 @@ Mostrar las filas que cambian antes de ejecutar.
 - [ ] Eventos nuevos en `pendiente` (salvo aprobación explícita)
 - [ ] Ninguna `instagram_url` modificada
 - [ ] Ningún evento genérico cargado
-- [ ] Venues existentes en `lugares`
+- [ ] Lugares existentes en `lugares` y en `espacios.ts`
 - [ ] Conteo final por estado
