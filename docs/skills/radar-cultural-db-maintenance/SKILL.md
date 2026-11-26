@@ -10,39 +10,46 @@ description: Mantenimiento de la base de Radar Cultural (proyecto Supabase boeur
 - **Pines del mapa:** `src/data/espacios.ts` (repo `Radar-Cultural-copia`). Son ~170 lugares. Si un lugar no está ahí, su pin no aparece en el mapa.
 - **Lugares válidos para eventos:** tabla `lugares` de Supabase (168 filas). Un evento solo se acepta si su `lugar` existe en esa tabla.
 
-Antes de cargar un evento, verificar que el lugar esté en **las dos**. Si falta en `espacios.ts`, el evento se guarda pero no se ve en el mapa. Si falta en `lugares`, el scraper lo descarta.
+Antes de cargar un evento, verificar que el lugar esté en **las dos**.
 
-## Esquema real (verificado 2026-11-24)
+## Esquema real (verificado 2026-11-26)
 
 Tabla `eventos`:
 - `titulo`, `lugar` (texto, NOT NULL). `lugar` debe coincidir con `lugares.nombre`.
-- `fecha_evento`, `fecha_cierre`: **texto** `YYYY-MM-DD`, o `NULL`. El valor centinela `2026-01-01` marca exposiciones y colecciones permanentes. Hay un CHECK que rechaza cualquier otro formato.
+- `fecha_evento`, `fecha_cierre`: **texto** `YYYY-MM-DD`, o `NULL`. El valor centinela `2026-01-01` marca permanentes. Hay un CHECK que rechaza cualquier otro formato.
+- `tipo_fecha` (texto): indica qué significan las fechas. Valores actuales:
+  - `fecha`: fecha exacta (46 eventos).
+  - `periodo`: rango entre `fecha_evento` y `fecha_cierre` (11 eventos).
+  - `sin_verificar`: la fecha no está confirmada (20 eventos, todos con centinela `2026-01-01`).
 - `estado`: `pendiente` | `aprobado` | `rechazado`. Default `pendiente`.
-- `hora`, `precio`, `descripcion`, `fuente_url`, `entrada_url`, `imagen_url`, `instagram_url`, `es_proximo`, `fecha_inauguracion`, `tipo_evento`.
+- `hora`, `precio`, `descripcion`, `fuente_url`, `entrada_url`, `imagen_url`, `instagram_url`, `es_proximo`, `fecha_inauguracion`, `tipo_evento`, `created_at`.
 - Índice único sobre `(lower(btrim(titulo)), lower(btrim(lugar)), COALESCE(fecha_evento,''))`. Un insert duplicado falla.
 
 Tabla `lugares`: `nombre` (único), `lat`, `lng`, `categoria` (`PUB`, `PRIV`, `CAFE`, `LIB`, `HIST`, `TEATRO`), `categoria_label`, `instagram`.
 
-Tablas auxiliares: `acciones_pendientes` (confirmaciones del bot de Telegram), `eventos_pendientes` (historial, sin uso activo), `fuentes_eventos`, `fotos`. La tabla `job_applications` **no es de Radar Cultural**: no tocarla.
+Tablas auxiliares: `acciones_pendientes`, `eventos_pendientes` (sin uso activo), `fuentes_eventos`, `fotos`. La tabla `job_applications` **no es de Radar Cultural**: no tocarla.
 
 ## Reglas críticas
 
-1. **Nunca modificar `instagram_url`** en ninguna tabla, aunque parezca incorrecto.
-2. **Eventos nuevos entran como `pendiente`.** Solo se pasan a `aprobado` con confirmación explícita de Juano. Nunca insertar directo como `aprobado`.
-3. **No cargar eventos genéricos.** Un título que solo describe una categoría o el nombre del lugar no se carga. La regla está en `scripts/scraper/lib/genericos.js` y en `REGLAS_CONTENIDO.md` del repo.
-4. **Fechas siempre en formato `YYYY-MM-DD`** (o `NULL`, o `2026-01-01` para permanentes). Nunca texto como "Por confirmar" ni formato `DD/MM/YYYY`.
-5. **Antes de borrar:** mostrar las filas con `SELECT`, guardar un respaldo (JSON en `supabase/backups/` del repo) y pedir confirmación explícita. Usar `RETURNING` en cada DELETE.
-6. **Lugares:** solo insertar eventos para lugares que existan en `lugares` **y** en `espacios.ts`. Si falta alguno, avisar antes de hacer nada.
+1. **Nunca modificar `instagram_url`** en ninguna tabla.
+2. **Eventos nuevos entran como `pendiente`** y solo pasan a `aprobado` con confirmación explícita de Juano.
+3. **No cargar eventos genéricos** (ver `scripts/scraper/lib/genericos.js` y `REGLAS_CONTENIDO.md`).
+4. **Fechas en `YYYY-MM-DD`** (o `NULL`, o `2026-01-01` para permanentes). Nunca "Por confirmar" ni `DD/MM/YYYY`.
+5. **Antes de borrar:** `SELECT` previo, respaldo JSON en `supabase/backups/` del repo, confirmación explícita y `RETURNING` en el DELETE.
+6. **Lugares:** solo insertar eventos para lugares que existan en `lugares` **y** en `espacios.ts`.
+7. **`sin_verificar` no es permanente.** Esos 20 eventos tienen el centinela pero su fecha es desconocida. No cambiar su `tipo_fecha` ni su `estado` sin que Juano confirme la fecha real.
+8. **`es_proximo` solo para `tipo_fecha` en (`fecha`, `periodo`)** y con fecha dentro de los próximos 7 días.
 
 ## Diagnóstico inicial
 
 ```sql
-SELECT estado, COUNT(*) FROM eventos GROUP BY estado;
+SELECT tipo_fecha, estado, COUNT(*) FROM eventos GROUP BY 1, 2 ORDER BY 1, 2;
 
--- Aprobados ya vencidos (excluye permanentes)
-SELECT id, titulo, lugar, fecha_evento, fecha_cierre
+-- Aprobados ya vencidos (solo fecha y periodo; excluye permanentes y sin_verificar)
+SELECT id, titulo, lugar, tipo_fecha, fecha_evento, fecha_cierre
 FROM eventos
 WHERE estado = 'aprobado'
+  AND tipo_fecha IN ('fecha', 'periodo')
   AND fecha_evento <> '2026-01-01'
   AND COALESCE(fecha_cierre, fecha_evento) < CURRENT_DATE::text
 ORDER BY fecha_evento;
@@ -54,9 +61,14 @@ WHERE estado = 'pendiente' AND fecha_evento IS NULL;
 
 Mostrar el resultado a Juano y pedir confirmación antes de cualquier cambio.
 
-## Limpieza de vencidos
+## Vencimiento
 
-Los eventos con `fecha_evento = '2026-01-01'` nunca vencen. Los demás vencen cuando pasa `fecha_cierre` (o `fecha_evento` si no hay cierre).
+- `tipo_fecha = 'fecha'`: vence cuando pasa `fecha_evento`.
+- `tipo_fecha = 'periodo'`: vence cuando pasa `fecha_cierre`.
+- Centinela `2026-01-01`: nunca vence.
+- `tipo_fecha = 'sin_verificar'`: no vence por fecha. Revisar a mano con Juano.
+
+## Limpieza de vencidos
 
 ```sql
 -- Paso 1: respaldo (copiar el resultado a supabase/backups/ en el repo)
@@ -66,25 +78,26 @@ SELECT to_jsonb(e) FROM eventos e WHERE id IN (...);
 DELETE FROM eventos WHERE id IN (...) RETURNING id, titulo, estado;
 ```
 
-Si hay más de 20 eventos, el scraper aplica un circuit breaker y pide confirmación por Telegram. Hacer lo mismo en manual: resumen primero, confirmación después.
+Si hay más de 20 eventos, el scraper aplica un circuit breaker y pide confirmación por Telegram. En manual: resumen primero, confirmación después.
 
 ## Insertar eventos
 
 ```sql
-INSERT INTO eventos (titulo, lugar, fecha_evento, fecha_cierre, hora, precio, descripcion, fuente_url, entrada_url, tipo_evento, estado)
-VALUES ('Título concreto', 'Nombre exacto en lugares', '2026-12-05', NULL, '20:00', NULL, NULL, 'https://...', NULL, 'musica', 'pendiente')
+INSERT INTO eventos (titulo, lugar, fecha_evento, fecha_cierre, tipo_fecha, hora, precio, descripcion, fuente_url, entrada_url, tipo_evento, estado)
+VALUES ('Título concreto', 'Nombre exacto en lugares', '2026-12-05', NULL, 'fecha', '20:00', NULL, NULL, 'https://...', NULL, 'musica', 'pendiente')
 RETURNING id, titulo, estado;
 ```
 
-Verificar antes: el título es concreto (no genérico), la fecha es `YYYY-MM-DD`, el `lugar` existe en `lugares` y en `espacios.ts`, y `fuente_url` es absoluta.
+Verificar antes: título concreto, `tipo_fecha` correcto (`fecha` o `periodo`, nunca `sin_verificar` salvo pedido explícito), fecha en `YYYY-MM-DD`, lugar en `lugares` y en `espacios.ts`, y `fuente_url` absoluta.
 
 ## Flag `es_proximo`
 
-Solo `true` para eventos de los próximos 7 días:
-
 ```sql
-UPDATE eventos SET es_proximo = (fecha_evento::date BETWEEN CURRENT_DATE AND CURRENT_DATE + 7)
-WHERE fecha_evento ~ '^\d{4}-\d{2}-\d{2}$' AND fecha_evento <> '2026-01-01'
+UPDATE eventos
+SET es_proximo = (fecha_evento::date BETWEEN CURRENT_DATE AND CURRENT_DATE + 7)
+WHERE tipo_fecha IN ('fecha', 'periodo')
+  AND fecha_evento ~ '^\d{4}-\d{2}-\d{2}$'
+  AND fecha_evento <> '2026-01-01'
 RETURNING id, titulo, es_proximo;
 ```
 
@@ -96,5 +109,6 @@ Mostrar las filas que cambian antes de ejecutar.
 - [ ] Eventos nuevos en `pendiente` (salvo aprobación explícita)
 - [ ] Ninguna `instagram_url` modificada
 - [ ] Ningún evento genérico cargado
+- [ ] `sin_verificar` sin cambios no autorizados
 - [ ] Lugares existentes en `lugares` y en `espacios.ts`
-- [ ] Conteo final por estado
+- [ ] Conteo final por `tipo_fecha` y `estado`
