@@ -16,12 +16,13 @@ Antes de cargar un evento, verificar que el lugar esté en **las dos**.
 
 Tabla `eventos`:
 - `titulo`, `lugar` (texto, NOT NULL). `lugar` debe coincidir con `lugares.nombre`.
-- `fecha_evento`, `fecha_cierre`: **texto** `YYYY-MM-DD`, o `NULL`. El valor centinela `2026-01-01` marca permanentes. Hay un CHECK que rechaza cualquier otro formato.
-- `tipo_fecha` (texto): indica qué significan las fechas. Valores actuales:
-  - `fecha`: fecha exacta (46 eventos).
-  - `periodo`: rango entre `fecha_evento` y `fecha_cierre` (11 eventos).
-  - `sin_verificar`: la fecha no está confirmada (20 eventos, todos con centinela `2026-01-01`).
-- `estado`: `pendiente` | `aprobado` | `rechazado`. Default `pendiente`.
+- `fecha_evento`, `fecha_cierre`: **texto** `YYYY-MM-DD`, o `NULL`. Hay CHECK que rechaza cualquier otro formato.
+- `tipo_fecha` (texto, CHECK): `fecha` | `periodo` | `permanente` | `sin_verificar`.
+  - `fecha`: fecha puntual (46 eventos).
+  - `periodo`: dura varios días o semanas, con `fecha_evento` y `fecha_cierre` (11 eventos).
+  - `permanente`: exposición o colección permanente. Permitido, pero hoy no hay filas.
+  - `sin_verificar`: la fecha no está confirmada (20 eventos, todos con `fecha_evento = '2026-01-01'`).
+- `estado` (CHECK): `pendiente` | `aprobado` | `rechazado`. Default `pendiente`.
 - `hora`, `precio`, `descripcion`, `fuente_url`, `entrada_url`, `imagen_url`, `instagram_url`, `es_proximo`, `fecha_inauguracion`, `tipo_evento`, `created_at`.
 - Índice único sobre `(lower(btrim(titulo)), lower(btrim(lugar)), COALESCE(fecha_evento,''))`. Un insert duplicado falla.
 
@@ -34,10 +35,10 @@ Tablas auxiliares: `acciones_pendientes`, `eventos_pendientes` (sin uso activo),
 1. **Nunca modificar `instagram_url`** en ninguna tabla.
 2. **Eventos nuevos entran como `pendiente`** y solo pasan a `aprobado` con confirmación explícita de Juano.
 3. **No cargar eventos genéricos** (ver `scripts/scraper/lib/genericos.js` y `REGLAS_CONTENIDO.md`).
-4. **Fechas en `YYYY-MM-DD`** (o `NULL`, o `2026-01-01` para permanentes). Nunca "Por confirmar" ni `DD/MM/YYYY`.
+4. **Fechas en `YYYY-MM-DD`** (o `NULL`, o `2026-01-01` para permanentes y sin verificar). Nunca "Por confirmar" ni `DD/MM/YYYY`.
 5. **Antes de borrar:** `SELECT` previo, respaldo JSON en `supabase/backups/` del repo, confirmación explícita y `RETURNING` en el DELETE.
 6. **Lugares:** solo insertar eventos para lugares que existan en `lugares` **y** en `espacios.ts`.
-7. **`sin_verificar` no es permanente.** Esos 20 eventos tienen el centinela pero su fecha es desconocida. No cambiar su `tipo_fecha` ni su `estado` sin que Juano confirme la fecha real.
+7. **El centinela `2026-01-01` no define el tipo.** Lo define `tipo_fecha`. Un evento con centinela y `tipo_fecha = 'sin_verificar'` no es permanente: su fecha es desconocida. No cambiar su `tipo_fecha` ni su `estado` sin que Juano confirme la fecha real.
 8. **`es_proximo` solo para `tipo_fecha` en (`fecha`, `periodo`)** y con fecha dentro de los próximos 7 días.
 
 ## Diagnóstico inicial
@@ -45,12 +46,11 @@ Tablas auxiliares: `acciones_pendientes`, `eventos_pendientes` (sin uso activo),
 ```sql
 SELECT tipo_fecha, estado, COUNT(*) FROM eventos GROUP BY 1, 2 ORDER BY 1, 2;
 
--- Aprobados ya vencidos (solo fecha y periodo; excluye permanentes y sin_verificar)
+-- Aprobados ya vencidos (solo fecha y periodo)
 SELECT id, titulo, lugar, tipo_fecha, fecha_evento, fecha_cierre
 FROM eventos
 WHERE estado = 'aprobado'
   AND tipo_fecha IN ('fecha', 'periodo')
-  AND fecha_evento <> '2026-01-01'
   AND COALESCE(fecha_cierre, fecha_evento) < CURRENT_DATE::text
 ORDER BY fecha_evento;
 
@@ -65,7 +65,7 @@ Mostrar el resultado a Juano y pedir confirmación antes de cualquier cambio.
 
 - `tipo_fecha = 'fecha'`: vence cuando pasa `fecha_evento`.
 - `tipo_fecha = 'periodo'`: vence cuando pasa `fecha_cierre`.
-- Centinela `2026-01-01`: nunca vence.
+- `tipo_fecha = 'permanente'`: nunca vence.
 - `tipo_fecha = 'sin_verificar'`: no vence por fecha. Revisar a mano con Juano.
 
 ## Limpieza de vencidos
@@ -88,7 +88,7 @@ VALUES ('Título concreto', 'Nombre exacto en lugares', '2026-12-05', NULL, 'fec
 RETURNING id, titulo, estado;
 ```
 
-Verificar antes: título concreto, `tipo_fecha` correcto (`fecha` o `periodo`, nunca `sin_verificar` salvo pedido explícito), fecha en `YYYY-MM-DD`, lugar en `lugares` y en `espacios.ts`, y `fuente_url` absoluta.
+Verificar antes: título concreto, `tipo_fecha` correcto (`fecha` o `periodo`; `permanente` solo para exposiciones permanentes; nunca `sin_verificar` salvo pedido explícito), fecha en `YYYY-MM-DD`, lugar en `lugares` y en `espacios.ts`, y `fuente_url` absoluta.
 
 ## Flag `es_proximo`
 
@@ -97,7 +97,6 @@ UPDATE eventos
 SET es_proximo = (fecha_evento::date BETWEEN CURRENT_DATE AND CURRENT_DATE + 7)
 WHERE tipo_fecha IN ('fecha', 'periodo')
   AND fecha_evento ~ '^\d{4}-\d{2}-\d{2}$'
-  AND fecha_evento <> '2026-01-01'
 RETURNING id, titulo, es_proximo;
 ```
 
